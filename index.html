@@ -14,6 +14,7 @@
         button { background: #2a3650; border: none; color: white; padding: 8px 20px; border-radius: 40px; font-size: 14px; cursor: pointer; transition: 0.2s; }
         button.primary { background: #4f46e5; }
         button.primary:hover { background: #6366f1; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         .status { background: #1a2233; padding: 6px 16px; border-radius: 40px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
         .dot.connected { background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: pulse 1.5s infinite; }
@@ -34,7 +35,7 @@
 <body>
 <div class="container">
     <div class="video-wrapper">
-        <video id="video" controls controlsList="nodownload" preload="metadata">
+        <video id="video" controls controlsList="nodownload" preload="auto" autoplay>
             <source src="https://media.w3.org/2010/05/sintel/trailer.mp4">
         </video>
     </div>
@@ -96,6 +97,8 @@
     let pollInterval = null;
     let isApplyingSync = false;
     let isMaster = false;
+    let lastSyncTime = 0;
+    let lastPlayState = false;
     
     function updateStatus(connected, roomName = '') {
         if (connected) {
@@ -120,7 +123,7 @@
     
     // 发送心跳（只有房主发送状态更新）
     async function sendHeartbeat() {
-        if (!currentRoomId) return;
+        if (!currentRoomId || !isMaster) return;
         
         try {
             await fetch(API_URL, {
@@ -187,25 +190,25 @@
                 updateStatus(true, roomId);
                 
                 if (isMaster) {
-                    syncBadge.innerHTML = '👑 房主 (控制者)';
+                    syncBadge.innerHTML = '👑 房主';
                     masterBadge.innerHTML = '👑 房主';
                     showMessage(`✅ 已创建房间: ${roomId}，你是房主`);
+                    // 房主启动心跳（每5秒一次，减少请求）
+                    if (heartbeatInterval) clearInterval(heartbeatInterval);
+                    heartbeatInterval = setInterval(sendHeartbeat, 5000);
                 } else {
-                    syncBadge.innerHTML = '🟢 同步观看中';
+                    syncBadge.innerHTML = '🟢 同步中';
                     masterBadge.innerHTML = '👤 成员';
                     showMessage(`✅ 已加入房间: ${roomId}`);
                 }
                 
-                // 启动心跳
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
-                heartbeatInterval = setInterval(sendHeartbeat, 3000);
-                
-                // 启动轮询同步
+                // 启动轮询同步（成员每3秒，房主每5秒）
                 if (pollInterval) clearInterval(pollInterval);
-                pollInterval = setInterval(pollRoom, 2000);
+                const interval = isMaster ? 5000 : 3000;
+                pollInterval = setInterval(pollRoom, interval);
                 
                 // 立即同步一次
-                setTimeout(() => pollRoom(), 300);
+                setTimeout(() => pollRoom(), 500);
             }
         } catch (err) {
             console.error('加入房间失败:', err);
@@ -213,9 +216,14 @@
         }
     }
     
-    // 轮询同步（成员从房主获取状态）
+    // 轮询同步
     async function pollRoom() {
         if (!currentRoomId || isApplyingSync) return;
+        
+        // 防止过于频繁
+        const now = Date.now();
+        if (now - lastSyncTime < 500 && !isMaster) return;
+        lastSyncTime = now;
         
         try {
             const res = await fetch(`${API_URL}?roomId=${currentRoomId}`);
@@ -227,28 +235,33 @@
             
             const room = data.room;
             const viewerCount = room.viewers || 1;
-            viewerCountSpan.innerHTML = `👥 ${viewerCount} 人在线`;
+            viewerCountSpan.innerHTML = `👥 ${viewerCount} 人`;
             
             // 更新房主状态
             const wasMaster = isMaster;
             isMaster = room.masterId === clientId;
             if (wasMaster !== isMaster) {
                 if (isMaster) {
-                    syncBadge.innerHTML = '👑 房主 (控制者)';
+                    syncBadge.innerHTML = '👑 房主';
                     masterBadge.innerHTML = '👑 房主';
                     showMessage('你已成为房主');
+                    // 切换为房主模式
+                    clearInterval(pollInterval);
+                    pollInterval = setInterval(pollRoom, 5000);
                 } else {
-                    syncBadge.innerHTML = '🟢 同步观看中';
+                    syncBadge.innerHTML = '🟢 同步中';
                     masterBadge.innerHTML = '👤 成员';
+                    clearInterval(pollInterval);
+                    pollInterval = setInterval(pollRoom, 3000);
                 }
             }
             
-            // 只有非房主才同步
+            // 只有非房主才同步，且房间超过1人
             if (!isMaster && viewerCount > 1) {
                 isApplyingSync = true;
                 
                 try {
-                    // 同步视频地址
+                    // 同步视频地址（只有不同时才切换）
                     if (room.videoUrl && room.videoUrl !== videoUrl.value) {
                         videoUrl.value = room.videoUrl;
                         const wasPlaying = !video.paused;
@@ -260,23 +273,26 @@
                         showMessage(`🎬 同步视频`);
                     }
                     
-                    // 同步进度（差异大于0.3秒）
+                    // 同步进度（差异大于0.5秒才调整，避免频繁跳动）
                     const timeDiff = Math.abs(video.currentTime - room.currentTime);
-                    if (timeDiff > 0.3 && room.currentTime < video.duration) {
+                    if (timeDiff > 0.5 && room.currentTime > 0 && room.currentTime < video.duration) {
                         video.currentTime = room.currentTime;
                     }
                     
-                    // 同步播放状态
-                    if (video.paused && room.isPlaying) {
-                        await video.play().catch(() => {});
-                    } else if (!video.paused && !room.isPlaying) {
-                        video.pause();
+                    // 同步播放状态（避免频繁触发）
+                    const currentPlaying = !video.paused;
+                    if (currentPlaying !== room.isPlaying) {
+                        if (room.isPlaying) {
+                            await video.play().catch(() => {});
+                        } else {
+                            video.pause();
+                        }
                     }
                     
                 } catch (err) {
                     console.error('同步错误:', err);
                 } finally {
-                    setTimeout(() => { isApplyingSync = false; }, 500);
+                    setTimeout(() => { isApplyingSync = false; }, 800);
                 }
             }
             
@@ -288,11 +304,15 @@
     
     // 强制同步
     async function forceSync() {
-        if (isMaster) {
+        if (isMaster && currentRoomId) {
             await sendHeartbeat();
             showMessage('📡 已广播同步信号');
+        } else if (!isMaster && currentRoomId) {
+            // 成员强制同步：立即拉取房主状态
+            await pollRoom();
+            showMessage('📡 已同步房主进度');
         } else {
-            showMessage('只有房主可以控制同步', true);
+            showMessage('请先加入房间', true);
         }
     }
     
@@ -312,6 +332,7 @@
         } else {
             video.pause();
         }
+        // 立即发送心跳
         await sendHeartbeat();
     };
     
@@ -364,12 +385,25 @@
         }
     };
     
-    // 进度跳转时房主发送心跳
+    // 进度跳转时房主发送心跳（防抖）
+    let seekTimeout;
     video.addEventListener('seeked', () => {
         if (isMaster && currentRoomId) {
-            sendHeartbeat();
+            clearTimeout(seekTimeout);
+            seekTimeout = setTimeout(() => sendHeartbeat(), 100);
         }
     });
+    
+    // 播放状态变化时房主发送心跳（防抖）
+    let playStateTimeout;
+    const onPlayStateChange = () => {
+        if (isMaster && currentRoomId) {
+            clearTimeout(playStateTimeout);
+            playStateTimeout = setTimeout(() => sendHeartbeat(), 100);
+        }
+    };
+    video.addEventListener('play', onPlayStateChange);
+    video.addEventListener('pause', onPlayStateChange);
     
     // 页面关闭时离开
     window.addEventListener('beforeunload', () => {
@@ -389,14 +423,26 @@
     
     // 定期清理过期客户端
     setInterval(async () => {
-        if (currentRoomId) {
-            await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'cleanup' })
-            }).catch(() => {});
+        await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'cleanup' })
+        }).catch(() => {});
+    }, 30000);
+    
+    // 启用视频自动播放策略
+    video.addEventListener('canplay', () => {
+        if (isMaster && !video.paused) {
+            video.play().catch(() => {});
         }
-    }, 15000);
+    });
+    
+    // 解决 Chrome 自动播放策略
+    document.body.addEventListener('click', () => {
+        if (video.paused && isMaster && currentRoomId) {
+            video.play().catch(() => {});
+        }
+    }, { once: true });
 </script>
 </body>
 </html>

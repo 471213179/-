@@ -1,147 +1,116 @@
-// api/rooms.js
+import { Redis } from '@upstash/redis'
 
-let rooms = new Map();
+const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+})
 
-export default function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
+export default async function handler(req, res) {
 
     // 获取房间
     if (req.method === 'GET') {
-        const { roomId } = req.query;
 
-        if (roomId && rooms.has(roomId)) {
-            return res.status(200).json({
-                success: true,
-                room: rooms.get(roomId)
-            });
-        }
-
-        return res.status(200).json({
-            success: false
-        });
-    }
-
-    // POST
-    if (req.method === 'POST') {
-        const {
-            roomId,
-            roomName,
-            currentTime,
-            isPlaying,
-            videoUrl,
-            action,
-            clientId
-        } = req.body;
-
-        // cleanup
-        if (action === 'cleanup') {
-            const now = Date.now();
-
-            for (const [rid, room] of rooms.entries()) {
-                if (room.clients) {
-                    for (const [cid, lastSeen] of room.clients.entries()) {
-                        if (now - lastSeen > 10000) {
-                            room.clients.delete(cid);
-                        }
-                    }
-
-                    room.viewers = room.clients.size;
-
-                    if (room.viewers <= 0) {
-                        rooms.delete(rid);
-                    } else {
-                        rooms.set(rid, room);
-                    }
-                }
-            }
-
-            return res.status(200).json({
-                success: true
-            });
-        }
+        const { roomId } = req.query
 
         if (!roomId) {
             return res.status(400).json({
-                error: 'roomId required'
-            });
+                success: false
+            })
         }
 
-        // 创建房间
-        if (!rooms.has(roomId)) {
-            rooms.set(roomId, {
+        const room =
+            await redis.get(`room:${roomId}`)
+
+        return res.status(200).json({
+            success: true,
+            room: room || null
+        })
+    }
+
+    // 创建 / 更新房间
+    if (req.method === 'POST') {
+
+        const {
+            roomId,
+            clientId,
+            currentTime,
+            isPlaying,
+            videoUrl
+        } = req.body
+
+        if (!roomId) {
+            return res.status(400).json({
+                success: false
+            })
+        }
+
+        let room =
+            await redis.get(`room:${roomId}`)
+
+        // 新房间
+        if (!room) {
+
+            room = {
                 roomId,
-                roomName: roomName || `房间 ${roomId}`,
+                host: clientId,
                 currentTime: currentTime || 0,
                 isPlaying: isPlaying || false,
-                videoUrl:
-                    videoUrl ||
-                    'https://media.w3.org/2010/05/sintel/trailer.mp4',
+                videoUrl: videoUrl || '',
                 viewers: 1,
-                currentMaster: clientId,
-                clients: new Map([[clientId, Date.now()]]),
-                createdAt: Date.now(),
-                lastUpdate: Date.now()
-            });
+                updatedAt: Date.now()
+            }
+
+        } else {
+
+            room.currentTime =
+                currentTime ?? room.currentTime
+
+            room.isPlaying =
+                isPlaying ?? room.isPlaying
+
+            room.videoUrl =
+                videoUrl ?? room.videoUrl
+
+            room.updatedAt =
+                Date.now()
+
+            room.viewers = 2
         }
 
-        const room = rooms.get(roomId);
-
-        // 更新客户端
-        if (!room.clients) {
-            room.clients = new Map();
-        }
-
-        room.clients.set(clientId, Date.now());
-
-        room.viewers = room.clients.size;
-
-        // 实时同步
-        room.currentMaster = clientId;
-        room.currentTime = currentTime;
-        room.isPlaying = isPlaying;
-        room.videoUrl = videoUrl;
-        room.lastUpdate = Date.now();
-
-        rooms.set(roomId, room);
+        // 保存 10 分钟
+        await redis.set(
+            `room:${roomId}`,
+            room,
+            {
+                ex: 60 * 10
+            }
+        )
 
         return res.status(200).json({
             success: true,
             room
-        });
+        })
     }
 
-    // DELETE
+    // 删除房间
     if (req.method === 'DELETE') {
-        const { roomId, clientId } = req.body;
 
-        if (roomId && rooms.has(roomId)) {
-            const room = rooms.get(roomId);
+        const { roomId } = req.body
 
-            if (room.clients) {
-                room.clients.delete(clientId);
-
-                room.viewers = room.clients.size;
-
-                if (room.viewers <= 0) {
-                    rooms.delete(roomId);
-                } else {
-                    rooms.set(roomId, room);
-                }
-            }
+        if (!roomId) {
+            return res.status(400).json({
+                success: false
+            })
         }
+
+        await redis.del(`room:${roomId}`)
 
         return res.status(200).json({
             success: true
-        });
+        })
     }
 
     return res.status(405).json({
-        error: 'Method not allowed'
-    });
+        success: false
+    })
 }

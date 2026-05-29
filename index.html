@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>📺 情侣同步影院 · 只属于你们的专属房间</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 主卡片 */
+        .movie-room {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(18, 25, 45, 0.75);
+            backdrop-filter: blur(2px);
+            border-radius: 48px;
+            box-shadow: 0 30px 45px -20px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            padding: 24px 28px 32px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        /* 头部浪漫氛围 */
+        .love-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            gap: 12px;
+        }
+        .title-section h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFB7C5, #A7C0FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .title-section h1 span {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: normal;
+            color: #cdd9ff;
+            backdrop-filter: blur(4px);
+        }
+        .sub {
+            color: #99a7dd;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            gap: 12px;
+        }
+        .room-badge {
+            background: #1e2a48;
+            padding: 8px 16px;
+            border-radius: 80px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-left: 3px solid #ff99b4;
+        }
+
+        /* 视频容器 */
+        .video-container {
+            background: #000000;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 35px -12px black;
+            margin: 16px 0 22px 0;
+            position: relative;
+        }
+        video {
+            width: 100%;
+            display: block;
+            aspect-ratio: 16 / 9;
+            background: #03060c;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* 控制栏 */
+        .control-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin: 15px 0 18px;
+        }
+        .buttons-left {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #232e4e;
+            border: none;
+            color: #f0f3ff;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+        }
+        button.primary {
+            background: #6d5dfc;
+            box-shadow: 0 4px 12px rgba(109, 93, 252, 0.3);
+        }
+        button.primary:hover {
+            background: #887aff;
+            transform: translateY(-2px);
+        }
+        button.outline {
+            background: rgba(45, 55, 85, 0.8);
+            border: 1px solid #4f62a5;
+        }
+        button:hover {
+            background: #3b4880;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+
+        /* 同步魔法区域 */
+        .sync-magic {
+            background: rgba(12, 20, 35, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            padding: 16px 22px;
+            margin: 15px 0 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid rgba(109, 93, 252, 0.4);
+        }
+        .sync-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            background: #101826;
+            padding: 8px 16px;
+            border-radius: 80px;
+        }
+        .sync-code-display {
+            background: #010101aa;
+            font-family: monospace;
+            font-size: 1.35rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            padding: 6px 16px;
+            border-radius: 60px;
+            color: #c7e2ff;
+            border: 1px dashed #6d5dfc;
+        }
+        .status-badge {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: #0e162b;
+            padding: 6px 18px;
+            border-radius: 80px;
+        }
+        .role-tag {
+            font-weight: bold;
+            background: #2d3b66;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+        .role-tag.host {
+            background: #ff9f6e;
+            color: #1e1a2f;
+        }
+        .heartbeat {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px #4ade80;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.8);}
+            100% { opacity: 1; transform: scale(1.2);}
+        }
+        input {
+            background: #0c1222;
+            border: 1px solid #364573;
+            padding: 10px 16px;
+            border-radius: 60px;
+            color: white;
+            font-family: monospace;
+            font-size: 0.9rem;
+            outline: none;
+            min-width: 180px;
+        }
+        input:focus {
+            border-color: #8f7eff;
+        }
+        .footer-tip {
+            text-align: center;
+            font-size: 0.7rem;
+            margin-top: 22px;
+            opacity: 0.65;
+            color: #a2b0dd;
+        }
+        @media (max-width: 680px) {
+            .movie-room { padding: 18px; }
+            button { padding: 6px 14px; font-size: 0.75rem; }
+            .sync-code-display { font-size: 1rem; padding: 4px 12px; }
+        }
+        .toast-msg {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10172be6;
+            backdrop-filter: blur(20px);
+            padding: 8px 24px;
+            border-radius: 50px;
+            color: #f0eefc;
+            font-size: 0.85rem;
+            z-index: 1000;
+            pointer-events: none;
+            transition: 0.2s;
+            font-weight: 500;
+            border-left: 4px solid #ff9f6e;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+<div class="movie-room">
+    <div class="love-header">
+        <div class="title-section">
+            <h1>
+                🎬 我们的私人影院 
+                <span>✨ 专属同步房间 ✨</span>
+            </h1>
+            <div class="sub">
+                <span>💞 只属于你 & 她 · 实时同步观影</span>
+                <span>🌙 一键对齐进度</span>
+            </div>
+        </div>
+        <div class="room-badge">
+            🏠 固定房间码: <strong style="letter-spacing:1px;">SWEET-1314</strong>
+        </div>
+    </div>
+
+    <!-- 视频播放器 -->
+    <div class="video-container">
+        <video id="movieVideo" controlslist="nodownload" preload="metadata" crossorigin="anonymous">
+            <!-- 默认使用一个高质量公版测试视频，也可以换成你们喜欢的任何链接 -->
+            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCar.mp4" type="video/mp4">
+            浏览器不支持视频标签，请换一个现代浏览器。
+        </video>
+    </div>
+
+    <!-- 快捷控制区 -->
+    <div class="control-bar">
+        <div class="buttons-left">
+            <button id="playPauseBtn" class="primary">▶️ 播放 / 暂停</button>
+            <button id="syncWithPartnerBtn">🔄 同步到伴侣进度</button>
+            <button id="broadcastMyTimeBtn">📡 分享我的进度 (发送同步码)</button>
+        </div>
+        <div class="status-badge">
+            <span class="heartbeat"></span>
+            <span id="roleText" class="role-tag">👤 观众模式</span>
+            <span id="liveStatus">🎯 实时对齐</span>
+        </div>
+    </div>
+
+    <!-- 同步核心区：简单粗暴的同步码系统，适合两人互相贴进度 -->
+    <div class="sync-magic">
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <span style="font-weight: 500;">✨ 同步神器 ✨</span>
+            <div class="sync-card">
+                <span>📋 最新同步码 :</span>
+                <span id="liveSyncCode" class="sync-code-display">--:--</span>
+                <button id="copySyncCodeBtn" style="background:#433e7c;">复制码</button>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="pasteSyncInput" placeholder="粘贴伴侣的同步码" style="width: 150px;">
+                <button id="applySyncCodeBtn" class="primary">🎯 跳转对齐</button>
+            </div>
+        </div>
+        <div style="font-size: 0.7rem; background:#00000033; padding: 5px 12px; border-radius: 30px;">
+            💡 简单原理：任意一方点「分享我的进度」生成带时间的码，另一方粘贴码 → 瞬间同步电影画面！
+        </div>
+    </div>
+
+    <div class="footer-tip">
+        💖 使用方法：你们都在这个页面 → 一个人点「分享我的进度」→ 复制出现的同步码 → 另一个人粘贴并点「跳转对齐」 → 电影进度完全一致！<br>
+        🎥 也可以直接拖拽进度条，然后分享码给对方。完全免费，托管在GitHub，永久情侣专属。
+    </div>
+</div>
+<div id="globalToast" class="toast-msg" style="opacity:0;">✨ 消息</div>
+
+<script>
+    // ---------- DOM 元素 ----------
+    const video = document.getElementById('movieVideo');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const syncWithPartnerBtn = document.getElementById('syncWithPartnerBtn');
+    const broadcastMyTimeBtn = document.getElementById('broadcastMyTimeBtn');
+    const copySyncCodeBtn = document.getElementById('copySyncCodeBtn');
+    const pasteSyncInput = document.getElementById('pasteSyncInput');
+    const applySyncCodeBtn = document.getElementById('applySyncCodeBtn');
+    const roleTextSpan = document.getElementById('roleText');
+    const liveSyncCodeSpan = document.getElementById('liveSyncCode');
+
+    // 全局变量，保持简单同步体验，不做过多的host限制，两人平等，谁都可以生成同步码
+    // 这样更简单：任意一个人都可以做“发送方”，另外一个人做“接收方”，完美适合情侣场景。
+    let lastGeneratedCodeTime = 0;       // 最后生成码的秒数
+    let ignoreSeekEvent = false;         // 避免seek事件引起额外干扰
+    
+    // ---------- 辅助函数：格式化时间 → 码 (mm:ss 或 HH:MM:SS)
+    function secondsToSyncCode(seconds) {
+        if (isNaN(seconds)) return "00:00";
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        if (hrs > 0) {
+            return `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+        }
+        return `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    }
+
+    // 将同步码 (mm:ss 或 HH:MM:SS) 转为秒数
+    function syncCodeToSeconds(code) {
+        if (!code) return NaN;
+        let parts = code.split(':');
+        if (parts.length === 2) {
+            const mins = parseInt(parts[0], 10);
+            const secs = parseInt(parts[1], 10);
+            if (isNaN(mins) || isNaN(secs)) return NaN;
+            return mins * 60 + secs;
+        } else if (parts.length === 3) {
+            const hours = parseInt(parts[0], 10);
+            const mins = parseInt(parts[1], 10);
+            const secs = parseInt(parts[2], 10);
+            if (isNaN(hours) || isNaN(mins) || isNaN(secs)) return NaN;
+            return hours * 3600 + mins * 60 + secs;
+        }
+        return NaN;
+    }
+
+    // 显示提示消息
+    function showMessage(msg, isError = false) {
+        const toast = document.getElementById('globalToast');
+        toast.innerText = msg;
+        toast.style.opacity = '1';
+        toast.style.background = isError ? '#b91c1cd9' : '#10172be6';
+        toast.style.borderLeftColor = isError ? '#ff8877' : '#ff9f6e';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 2200);
+    }
+
+    // 更新时间显示并更新UI可选的同步码预览（自动显示当前进度）
+    function updateCurrentCodePreview() {
+        if (video && video.duration && !isNaN(video.currentTime)) {
+            const currCode = secondsToSyncCode(video.currentTime);
+            // 实时显示当前时间同步码（方便随时知道自己的码）
+            liveSyncCodeSpan.innerText = currCode;
+        } else {
+            liveSyncCodeSpan.innerText = "00:00";
+        }
+    }
+
+    // 核心同步方法：将视频跳转到指定时间（秒），并保持播放状态与原来一致？ 为了最好体验，默认跳转后自动播放（让看电影更连贯）
+    // 为了用户舒服，跳转同时保留对方的播放状态？但为了简单，跳转后默认继续播放（除非视频本来就是暂停）
+    // 更智能：根据对方分享时的播放状态可以通过码扩展，但为了极简可靠，跳转后尝试播放。
+    // 但是情侣双方如果需要暂停同步，也可以通过“同步后操作”；我们加一个增强：同步时保留当前的播放/暂停偏好?
+    // 为了让体验无感，同步跳转之后自动继续播放（毕竟看电影就是要一起看）
+    function seekToExactTime(targetSeconds, autoPlay = true) {
+        if (!video) return false;
+        if (isNaN(targetSeconds) || targetSeconds < 0) return false;
+        const duration = video.duration;
+        if (!duration || isNaN(duration)) {
+            showMessage("⚠️ 视频还未加载完成，请稍后重试", true);
+            return false;
+        }
+        let clampedTime = Math.min(Math.max(targetSeconds, 0), duration);
+        ignoreSeekEvent = true;
+        video.currentTime = clampedTime;
+        setTimeout(() => { ignoreSeekEvent = false; }, 200);
+        
+        if (autoPlay) {
+            video.play().catch(e => {
+                console.log("自动播放受限:", e);
+                showMessage("自动播放被浏览器拦截，请手动点击播放", true);
+            });
+        }
+        showMessage(`✨ 同步成功！ 进度跳转至 ${secondsToSyncCode(clampedTime)} 🎬`);
+        updateCurrentCodePreview();
+        return true;
+    }
+
+    // 生成当前视频的同步码并分享 (将码显示在界面中央区 + 复制到剪贴板)
+    function generateAndShareSyncCode() {
+        if (!video || !video.duration || isNaN(video.duration) || video.duration === 0) {
+            showMessage("⏳ 视频尚未就绪，请稍等加载完成再分享", true);
+            return;
+        }
+        const currentSec = video.currentTime;
+        const syncCode = secondsToSyncCode(currentSec);
+        // 将同步码显示在预览区块特别强调
+        liveSyncCodeSpan.innerText = syncCode;
+        // 复制到剪贴板
+        navigator.clipboard.writeText(syncCode).then(() => {
+            showMessage(`✅ 同步码 "${syncCode}" 已复制！ 快发给另一半吧 💌`);
+            // 顺便显示在粘贴输入框推荐
+            pasteSyncInput.value = syncCode;
+        }).catch(() => {
+            showMessage(`📋 手动复制码: ${syncCode}`, false);
+            pasteSyncInput.value = syncCode;
+        });
+        // 额外增加一个振动感（可选，无伤大雅）
+        lastGeneratedCodeTime = currentSec;
+    }
+
+    // 应用输入的同步码：从输入框读取并进行跳转
+    function applySyncFromInput() {
+        let rawCode = pasteSyncInput.value.trim();
+        if (rawCode === "") {
+            // 如果没输入但是同步码区有显示，自动取那个显示的试试
+            rawCode = liveSyncCodeSpan.innerText;
+            if (rawCode === "--:--" || rawCode === "00:00") {
+                showMessage("💏 请粘贴伴侣分享的同步码 (例如 01:23)", true);
+                return;
+            }
+        }
+        const targetSeconds = syncCodeToSeconds(rawCode);
+        if (isNaN(targetSeconds)) {
+            showMessage("❌ 无效的同步码，格式应为 分:秒 或 时:分:秒 (例如 05:30)", true);
+            return;
+        }
+        // 检查视频是否准备好
+        if (!video.duration || isNaN(video.duration)) {
+            showMessage("🎞️ 视频元数据加载中，请稍等几秒再同步", true);
+            return;
+        }
+        seekToExactTime(targetSeconds, true);
+    }
+
+    // 获取伴侣最新同步码（本质上和上面一样，简化心智：点击同步到伴侣进度，就是从对方那边拷贝码？但是我们提供另一种更直接方式：因为两人必须一方主动生成码。
+    // 为了方便，直接提示“请让伴侣分享码，然后粘贴对齐”，但为了按钮语义，syncWithPartnerBtn 即“同步到伴侣进度”，相当于等待粘贴同步码但快速唤起？
+    // 我们把这个按钮改成：快速打开提示并聚焦粘贴框。用户体验一流
+    function syncToPartner() {
+        showMessage("💬 让另一半点击「分享我的进度」按钮，将同步码发给你，然后粘贴到左侧框并点击「跳转对齐」✨", false);
+        pasteSyncInput.focus();
+    }
+
+    // 广播分享进度 与 generateAndShareSyncCode 合并, 复用
+    function broadcastMyProgress() {
+        generateAndShareSyncCode();
+    }
+
+    // 监听视频时间更新，实时更新显示的同步码预览 (这样你随时知道当前进度码)
+    function onTimeUpdate() {
+        if (video && video.duration && !isNaN(video.currentTime)) {
+            updateCurrentCodePreview();
+        }
+        // 可选显示进度百分比 (不用额外)
+    }
+    
+    // 播放/暂停按钮逻辑
+    function togglePlayPause() {
+        if (video.paused) {
+            video.play().catch(e => showMessage("播放失败，请手动点击视频", true));
+        } else {
+            video.pause();
+        }
+    }
+    
+    // 加载自定义视频功能：他们可以换链接（适合情侣换影片）
+    function enableCustomVideo() {
+        // 增加优雅的动态修改视频源功能，由于没有写自定义URL输入框有点遗憾，但可以通过控制台或者简单加一个？为提升体验，加一个浮动修改器?
+        // 但情侣可能想换电影，我就加一个优雅的弹窗方式（使用prompt）
+        const newUrl = prompt("🎬 输入视频网址 (MP4/M3U8等浏览器支持格式):", video.currentSrc || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCar.mp4");
+        if (newUrl && newUrl.trim() !== "") {
+            const wasPaused = video.paused;
+            video.src = newUrl;
+            video.load();
+            showMessage(`🔄 新视频加载中，稍后即可同步观看~`, false);
+            // 重置显示同步码
+            video.addEventListener('loadedmetadata', function onLoaded() {
+                showMessage("✅ 新视频已就绪！可以继续同步啦", false);
+                updateCurrentCodePreview();
+                video.removeEventListener('loadedmetadata', onLoaded);
+            }, { once: true });
+            if (!wasPaused) {
+                video.play().catch(e=>console.log);
+            }
+        }
+    }
+
+    // 复制当前显示同步码
+    function copyLiveSyncCode() {
+        const code = liveSyncCodeSpan.innerText;
+        if (code && code !== "--:--") {
+            navigator.clipboard.writeText(code).then(() => {
+                showMessage(`📋 已复制同步码: ${code} 快去发给另一半~`);
+            }).catch(()=>showMessage(`手动复制 ${code}`));
+        } else {
+            showMessage("视频还没准备好，稍等再复制", true);
+        }
+    }
+
+    // 额外彩蛋：如果两人想完全同步播放与暂停，我们可以附加一个同步码额外包含状态？简化起见，只同步进度，播放状态让双方自行控制
+    // 但是大多数时候，一个人暂停另一个人也会暂停。加一个辅助同步播放状态的按钮？ 为了方便再添加一个按钮叫“同步播放状态”，其实可以再做，为了简洁不冗余，但加上一个轻提示。
+    // 用户明白：进度一致后，一方播放/暂停另一方手动同样操作，不过我们可以提供 同步播放状态的简易功能。
+    // 为了完美情侣体验，我增加一个隐藏buff：当房主的概念虽然弱化，但可以让双方更方便，再加一个“请求对方暂停/播放”依赖于同步消息码？会影响复杂度。但不加也可以，点击同步进度后自动播放，因此只要进度对齐，再次手动暂停即可。非常舒适。
+
+    // 辅助：若视频卡住或加载问题显示友好
+    function initEventBindings() {
+        video.addEventListener('timeupdate', onTimeUpdate);
+        video.addEventListener('loadedmetadata', () => {
+            updateCurrentCodePreview();
+            showMessage("🎥 影片已加载，可以开始同步啦~", false);
+        });
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        syncWithPartnerBtn.addEventListener('click', syncToPartner);
+        broadcastMyTimeBtn.addEventListener('click', broadcastMyProgress);
+        copySyncCodeBtn.addEventListener('click', copyLiveSyncCode);
+        applySyncCodeBtn.addEventListener('click', applySyncFromInput);
+        
+        // 回车快捷同步
+        pasteSyncInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applySyncFromInput();
+            }
+        });
+        // 右键/额外双击也可以同步？无关紧要
+        // 动态更换视频: 由于菜单没有直接加按钮但可以用快捷键，增加一个隐形双击标题区域更换视频 - 可爱彩蛋
+        const titleArea = document.querySelector('.title-section h1');
+        if(titleArea) {
+            titleArea.addEventListener('dblclick', enableCustomVideo);
+        }
+        // 显示角色文本为情侣双人模式
+        roleTextSpan.innerText = "💑 情侣同步模式";
+        roleTextSpan.classList.add('host');
+        roleTextSpan.style.background = "#ff9f6e";
+        roleTextSpan.style.color = "#1a142f";
+        // 简单美化: 让状态栏更温馨
+        document.getElementById('liveStatus').innerHTML = "💖 甜蜜同步器";
+    }
+
+    // 自动初始化时设置几个默认同步码展示，确保视频时间显示友好
+    video.addEventListener('loadeddata', () => {
+        updateCurrentCodePreview();
+    });
+    
+    // 处理Seek时避免循环通知(不需要复杂广播，纯手工码同步最高效)
+    video.addEventListener('seeked', () => {
+        if (!ignoreSeekEvent) {
+            updateCurrentCodePreview();
+        }
+    });
+    
+    // 额外增加页面可见性变化时无需过度处理, 保证体验简单干净
+    initEventBindings();
+    // 设置初始预览
+    setTimeout(() => {
+        if(video.readyState >= 1) updateCurrentCodePreview();
+    }, 500);
+    showMessage("🎉 房间已开启！一人分享进度码，另一人粘贴即可同步观影", false);
+</script>
+</body>
+</html>

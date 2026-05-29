@@ -2,546 +2,341 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>一起看 · 房间列表同步观影</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一起看 · 同步观影</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background: #0a0e1a;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        /* 两栏布局 */
-        .two-columns {
-            display: flex;
-            gap: 24px;
-            flex-wrap: wrap;
-        }
-        .video-section {
-            flex: 2;
-            min-width: 300px;
-        }
-        .rooms-section {
-            flex: 1;
-            min-width: 280px;
-            background: #11161f;
-            border-radius: 24px;
-            padding: 20px;
-            height: fit-content;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .video-card {
-            background: #11161f;
-            border-radius: 24px;
-            overflow: hidden;
-        }
-        .video-wrapper {
-            background: #000;
-            aspect-ratio: 16 / 9;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            display: block;
-            outline: none;
-        }
-        .controls {
-            padding: 16px;
-            background: #0f141e;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-        }
-        button {
-            background: #2a3650;
-            border: none;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button.primary {
-            background: #4f46e5;
-        }
-        button.primary:hover {
-            background: #6366f1;
-        }
-        button.danger {
-            background: #dc2626;
-        }
-        .status {
-            background: #1a2233;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #f59e0b;
-        }
-        .dot.connected {
-            background: #22c55e;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 0.5; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1.2); }
-        }
-        
-        /* 房间列表样式 */
-        .rooms-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .rooms-header h3 {
-            color: #eef4ff;
-        }
-        .create-room-btn {
-            background: #22c55e;
-            padding: 8px 16px;
-            font-size: 13px;
-        }
-        .room-item {
-            background: #1a2233;
-            border-radius: 16px;
-            padding: 14px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid transparent;
-        }
-        .room-item:hover {
-            border-color: #4f46e5;
-            transform: translateX(4px);
-        }
-        .room-item.active {
-            border-color: #4f46e5;
-            background: #1f2a44;
-        }
-        .room-name {
-            font-weight: 600;
-            color: #eef4ff;
-            display: flex;
-            justify-content: space-between;
-        }
-        .room-info {
-            font-size: 12px;
-            color: #8b9acb;
-            margin-top: 8px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .room-status {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 20px;
-            background: #2a3650;
-        }
-        .room-status.playing {
-            background: #22c55e20;
-            color: #22c55e;
-        }
-        .room-status.paused {
-            background: #f59e0b20;
-            color: #f59e0b;
-        }
-        .empty-rooms {
-            text-align: center;
-            color: #5b6a8c;
-            padding: 40px;
-        }
-        
-        .video-row {
-            margin-top: 12px;
-            padding: 12px;
-            background: #0c111b;
-            border-radius: 16px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .video-row input {
-            flex: 2;
-            background: #1a2233;
-            border: 1px solid #2f3b54;
-            padding: 8px 12px;
-            border-radius: 40px;
-            color: white;
-            font-size: 13px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #5b6a8c;
-        }
-        @media (max-width: 900px) {
-            .two-columns { flex-direction: column; }
-            .rooms-section { max-height: 400px; }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0e1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; padding: 16px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .video-wrapper { background: #000; border-radius: 20px; overflow: hidden; }
+        video { width: 100%; aspect-ratio: 16 / 9; display: block; outline: none; }
+        .controls { background: #11161f; padding: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; border-radius: 0 0 20px 20px; }
+        button { background: #2a3650; border: none; color: white; padding: 8px 20px; border-radius: 40px; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        button.primary { background: #4f46e5; }
+        button.primary:hover { background: #6366f1; }
+        .status { background: #1a2233; padding: 6px 16px; border-radius: 40px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
+        .dot.connected { background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+        .room-panel { background: #11161f; margin-top: 16px; padding: 16px; border-radius: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .room-panel input { flex: 1; background: #1a2233; border: 1px solid #2f3b54; padding: 10px 16px; border-radius: 40px; color: white; font-size: 16px; text-align: center; letter-spacing: 2px; }
+        .video-row { background: #0c111b; margin-top: 12px; padding: 12px 16px; border-radius: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .video-row input { flex: 2; background: #1a2233; border: 1px solid #2f3b54; padding: 8px 14px; border-radius: 40px; color: white; font-size: 13px; }
+        .preset-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .preset-btns button { padding: 6px 14px; font-size: 12px; background: #1e2a3a; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #5b6a8c; }
+        .viewer-count { background: #1a2233; padding: 6px 12px; border-radius: 40px; font-size: 12px; }
+        @media (max-width: 640px) { body { padding: 12px; } button { padding: 6px 14px; font-size: 12px; } }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="two-columns">
-        <!-- 左侧：视频播放器 -->
-        <div class="video-section">
-            <div class="video-card">
-                <div class="video-wrapper">
-                    <video id="video" controls controlsList="nodownload" preload="metadata">
-                        <source src="https://media.w3.org/2010/05/sintel/trailer.mp4">
-                    </video>
-                </div>
-                <div class="controls">
-                    <button id="playPauseBtn" class="primary">▶ 播放/暂停</button>
-                    <button id="refreshBtn">🔄 刷新房间</button>
-                    <div class="status">
-                        <span class="dot" id="statusDot"></span>
-                        <span id="statusText">未加入房间</span>
-                    </div>
-                </div>
-                <div class="video-row">
-                    <input type="text" id="videoUrl" placeholder="视频链接" value="https://media.w3.org/2010/05/sintel/trailer.mp4">
-                    <button id="loadVideoBtn">加载</button>
-                </div>
-            </div>
+    <div class="video-wrapper">
+        <video id="video" controls controlsList="nodownload" preload="metadata">
+            <source src="https://media.w3.org/2010/05/sintel/trailer.mp4">
+        </video>
+    </div>
+    <div class="controls">
+        <div style="display: flex; gap: 10px;">
+            <button id="playPauseBtn" class="primary">▶ 播放/暂停</button>
+            <button id="forceSyncBtn">🔄 强制同步</button>
         </div>
-
-        <!-- 右侧：房间列表 -->
-        <div class="rooms-section">
-            <div class="rooms-header">
-                <h3>📺 公开房间</h3>
-                <button id="createRoomBtn" class="create-room-btn">➕ 创建房间</button>
-            </div>
-            <div id="roomList">
-                <div class="empty-rooms">暂无房间，点击「创建房间」</div>
-            </div>
-            <div style="margin-top: 16px; font-size: 12px; color: #5b6a8c; text-align: center;">
-                💡 点击房间即可进入，自动同步房主进度
-            </div>
+        <div class="status">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">未连接</span>
         </div>
     </div>
+
+    <div class="room-panel">
+        <input type="text" id="roomInput" placeholder="房间号 (两人输入相同数字)">
+        <button id="joinBtn" class="primary">🔗 加入/创建房间</button>
+        <button id="copyRoomBtn">📋 复制房间号</button>
+        <div class="viewer-count" id="viewerCount">👥 等待中</div>
+    </div>
+
+    <div class="video-row">
+        <input type="text" id="videoUrl" placeholder="视频链接 (MP4地址)" value="https://media.w3.org/2010/05/sintel/trailer.mp4">
+        <button id="loadVideoBtn">加载</button>
+    </div>
+    <div class="preset-btns">
+        <button class="preset" data-url="https://media.w3.org/2010/05/sintel/trailer.mp4">🎬 动画短片</button>
+        <button class="preset" data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">🔥 火焰特效</button>
+        <button class="preset" data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCar.mp4">🚗 汽车广告</button>
+        <button class="preset" data-url="https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4">🐰 小兔子</button>
+    </div>
+
     <div class="footer">
-        🎬 创建房间 → 别人点击进入 → 自动同步你的播放进度
+        💡 两人输入相同房间号 → 都点「加入/创建房间」→ 播放/暂停/进度自动同步（约2秒延迟）
     </div>
 </div>
 
 <script>
-    // ========== 配置 ==========
-    const API_URL = '/api/rooms';  // Vercel 函数地址
+    // API 地址 - 部署后自动使用当前域名
+    const API_URL = '/api/rooms';
     
-    // DOM 元素
     const video = document.getElementById('video');
     const playPauseBtn = document.getElementById('playPauseBtn');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const createRoomBtn = document.getElementById('createRoomBtn');
-    const loadVideoBtn = document.getElementById('loadVideoBtn');
-    const videoUrl = document.getElementById('videoUrl');
+    const forceSyncBtn = document.getElementById('forceSyncBtn');
+    const joinBtn = document.getElementById('joinBtn');
+    const copyRoomBtn = document.getElementById('copyRoomBtn');
+    const roomInput = document.getElementById('roomInput');
     const statusText = document.getElementById('statusText');
     const statusDot = document.getElementById('statusDot');
-    const roomListDiv = document.getElementById('roomList');
+    const videoUrl = document.getElementById('videoUrl');
+    const loadVideoBtn = document.getElementById('loadVideoBtn');
+    const viewerCountSpan = document.getElementById('viewerCount');
     
-    // 状态
     let currentRoomId = null;
-    let currentRoomName = null;
     let isInRoom = false;
     let heartbeatInterval = null;
-    let refreshInterval = null;
+    let pollInterval = null;
     let ignoreSync = false;
+    let lastSyncTime = 0;
     
-    // 显示消息
-    function showMessage(msg, isError = false) {
-        let toast = document.querySelector('.custom-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.className = 'custom-toast';
-            toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1a253c;padding:10px 28px;border-radius:50px;font-size:14px;z-index:10000;white-space:nowrap;';
-            document.body.appendChild(toast);
-        }
-        toast.textContent = msg;
-        toast.style.background = isError ? '#dc2626' : '#1a253c';
-        toast.style.opacity = '1';
-        setTimeout(() => {
-            toast.style.opacity = '0';
-        }, 2000);
-    }
-    
-    // 更新连接状态
-    function updateStatus(inRoom, roomName = '') {
-        if (inRoom) {
-            statusText.innerHTML = `🎬 观看中: ${roomName}`;
+    function updateStatus(connected, roomName = '') {
+        if (connected) {
+            statusText.innerHTML = `✅ 已同步 · 房间: ${roomName}`;
             statusDot.className = 'dot connected';
-            isInRoom = true;
         } else {
-            statusText.innerHTML = '未加入房间';
+            statusText.innerHTML = '⏳ 等待连接...';
             statusDot.className = 'dot';
-            isInRoom = false;
         }
     }
     
-    // 获取房间列表
-    async function fetchRooms() {
-        try {
-            const res = await fetch(API_URL);
-            const rooms = await res.json();
-            renderRoomList(rooms);
-        } catch (err) {
-            console.error('获取房间失败:', err);
-        }
+    function showMessage(msg, isError = false) {
+        const oldToast = document.querySelector('.toast-temp');
+        if (oldToast) oldToast.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast-temp';
+        toast.textContent = msg;
+        toast.style.cssText = `position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:${isError ? '#dc2626' : '#1a253c'};padding:8px 24px;border-radius:50px;font-size:13px;z-index:9999;white-space:nowrap;`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
     }
     
-    // 渲染房间列表
-    function renderRoomList(rooms) {
-        if (!rooms || rooms.length === 0) {
-            roomListDiv.innerHTML = '<div class="empty-rooms">✨ 暂无房间，点击「创建房间」</div>';
-            return;
-        }
-        
-        // 按更新时间排序
-        rooms.sort((a, b) => b.lastUpdate - a.lastUpdate);
-        
-        roomListDiv.innerHTML = rooms.map(room => `
-            <div class="room-item ${currentRoomId === room.roomId ? 'active' : ''}" data-room-id="${room.roomId}">
-                <div class="room-name">
-                    <span>🏠 ${escapeHtml(room.roomName)}</span>
-                    <span class="room-status ${room.isPlaying ? 'playing' : 'paused'}">
-                        ${room.isPlaying ? '▶ 播放中' : '⏸ 暂停'}
-                    </span>
-                </div>
-                <div class="room-info">
-                    <span>👥 ${room.viewers || 1} 人在看</span>
-                    <span>📌 ${formatTime(room.currentTime)}</span>
-                    <span>🕐 ${formatTimeAgo(room.lastUpdate)}</span>
-                </div>
-            </div>
-        `).join('');
-        
-        // 绑定点击事件
-        document.querySelectorAll('.room-item').forEach(el => {
-            el.addEventListener('click', () => {
-                const roomId = el.dataset.roomId;
-                const room = rooms.find(r => r.roomId === roomId);
-                if (room) {
-                    joinRoom(room);
-                }
-            });
-        });
-    }
-    
-    // 加入房间
-    async function joinRoom(room) {
-        if (currentRoomId === room.roomId) {
-            showMessage('已经在当前房间');
-            return;
-        }
-        
-        showMessage(`📺 正在进入 ${room.roomName}...`);
-        
-        // 停止心跳
-        if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-            heartbeatInterval = null;
-        }
-        
-        // 同步房主进度
-        ignoreSync = true;
-        
-        // 切换视频源
-        if (video.src !== room.videoUrl) {
-            video.src = room.videoUrl;
-            video.load();
-            await new Promise(resolve => {
-                video.addEventListener('loadedmetadata', resolve, { once: true });
-                setTimeout(resolve, 2000);
-            });
-        }
-        
-        // 同步进度
-        video.currentTime = room.currentTime;
-        if (room.isPlaying) {
-            video.play().catch(e => console.log('播放失败'));
-        } else {
-            video.pause();
-        }
-        
-        setTimeout(() => {
-            ignoreSync = false;
-        }, 500);
-        
-        currentRoomId = room.roomId;
-        currentRoomName = room.roomName;
-        updateStatus(true, room.roomName);
-        
-        showMessage(`✅ 已加入 ${room.roomName}，正在同步`);
-        
-        // 开始心跳（作为观众也发送心跳，让房主知道有人在看）
-        startHeartbeat(false);
-    }
-    
-    // 创建房间
-    async function createRoom() {
-        const roomName = prompt('给房间起个名字吧', `@${Math.floor(Math.random() * 1000)}的房间`);
-        if (!roomName) return;
-        
-        const roomId = 'room_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        
-        const currentTime = video.currentTime || 0;
-        const isPlaying = !video.paused;
-        const videoUrlValue = videoUrl.value;
+    // 发送心跳（更新房间状态）
+    async function sendHeartbeat() {
+        if (!currentRoomId) return;
         
         try {
             await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    roomId,
-                    roomName,
-                    currentTime,
-                    isPlaying,
-                    videoUrl: videoUrlValue,
-                    action: 'create'
+                    action: 'heartbeat',
+                    roomId: currentRoomId,
+                    currentTime: video.currentTime,
+                    isPlaying: !video.paused,
+                    videoUrl: videoUrl.value
+                })
+            });
+        } catch (err) {
+            console.error('心跳失败:', err);
+        }
+    }
+    
+    // 创建/加入房间
+    async function joinRoom(roomId, roomName) {
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomId: roomId,
+                    roomName: roomName || `房间 ${roomId.slice(-4)}`,
+                    currentTime: video.currentTime,
+                    isPlaying: !video.paused,
+                    videoUrl: videoUrl.value
                 })
             });
             
-            currentRoomId = roomId;
-            currentRoomName = roomName;
-            updateStatus(true, roomName);
-            
-            // 开始心跳
-            startHeartbeat(true);
-            
-            showMessage(`✅ 房间 "${roomName}" 创建成功！`);
-            fetchRooms();
+            const data = await res.json();
+            if (data.success) {
+                currentRoomId = roomId;
+                isInRoom = true;
+                updateStatus(true, roomId);
+                showMessage(`✅ 已加入房间: ${roomId}`);
+                
+                // 启动心跳（每2秒）
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                heartbeatInterval = setInterval(sendHeartbeat, 2000);
+                
+                // 启动轮询（每3秒获取房间状态同步）
+                if (pollInterval) clearInterval(pollInterval);
+                pollInterval = setInterval(pollRoom, 3000);
+                
+                // 立即同步一次
+                setTimeout(() => pollRoom(), 500);
+            }
         } catch (err) {
-            showMessage('创建失败: ' + err.message, true);
+            console.error('加入房间失败:', err);
+            showMessage('❌ 加入房间失败', true);
         }
     }
     
-    // 发送心跳（更新房间状态）
-    function startHeartbeat(isHost) {
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
+    // 轮询获取房间状态并同步
+    async function pollRoom() {
+        if (!currentRoomId) return;
         
-        heartbeatInterval = setInterval(async () => {
-            if (!currentRoomId) return;
+        try {
+            const res = await fetch(API_URL);
+            const rooms = await res.json();
+            const room = rooms.find(r => r.roomId === currentRoomId);
             
+            if (!room) {
+                viewerCountSpan.innerHTML = '👥 房间不存在';
+                return;
+            }
+            
+            const viewerCount = room.viewers || 1;
+            viewerCountSpan.innerHTML = `👥 ${viewerCount} 人在线`;
+            
+            // 只有超过1人在线时才同步
+            if (viewerCount <= 1) return;
+            
+            // 同步时间（差异大于0.8秒才调整）
+            const timeDiff = Math.abs(video.currentTime - room.currentTime);
+            if (timeDiff > 0.8 && !ignoreSync) {
+                ignoreSync = true;
+                video.currentTime = room.currentTime;
+                setTimeout(() => { ignoreSync = false; }, 500);
+            }
+            
+            // 同步播放状态
+            if (video.paused === room.isPlaying && !ignoreSync) {
+                ignoreSync = true;
+                if (room.isPlaying) {
+                    video.play().catch(e => console.log('播放失败'));
+                } else {
+                    video.pause();
+                }
+                setTimeout(() => { ignoreSync = false; }, 300);
+            }
+            
+            // 同步视频地址（如果不同）
+            if (room.videoUrl && room.videoUrl !== videoUrl.value && !ignoreSync) {
+                videoUrl.value = room.videoUrl;
+                video.src = room.videoUrl;
+                video.load();
+                showMessage(`🎬 同步视频: ${room.videoUrl.slice(-30)}`);
+            }
+            
+            lastSyncTime = Date.now();
+        } catch (err) {
+            console.error('轮询失败:', err);
+        }
+    }
+    
+    // 强制发送同步信号
+    async function forceSync() {
+        await sendHeartbeat();
+        showMessage('📡 已发送同步信号');
+        setTimeout(() => pollRoom(), 500);
+    }
+    
+    // 离开房间
+    async function leaveRoom() {
+        if (currentRoomId) {
             try {
                 await fetch(API_URL, {
-                    method: 'POST',
+                    method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        roomId: currentRoomId,
-                        roomName: currentRoomName,
-                        currentTime: video.currentTime,
-                        isPlaying: !video.paused,
-                        videoUrl: videoUrl.value,
-                        action: 'heartbeat'
-                    })
+                    body: JSON.stringify({ roomId: currentRoomId })
                 });
             } catch (err) {
-                console.error('心跳失败:', err);
+                console.error('离开房间失败:', err);
             }
-        }, 5000);
-    }
-    
-    // 退出房间
-    function leaveRoom() {
-        if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-            heartbeatInterval = null;
         }
+        
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        if (pollInterval) clearInterval(pollInterval);
+        
         currentRoomId = null;
-        currentRoomName = null;
+        isInRoom = false;
         updateStatus(false);
-        showMessage('已离开房间');
+        viewerCountSpan.innerHTML = '👥 未加入';
     }
     
-    // 工具函数
-    function formatTime(seconds) {
-        if (!seconds || isNaN(seconds)) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
+    // 加入/创建房间
+    joinBtn.onclick = async () => {
+        let room = roomInput.value.trim();
+        if (!room) {
+            room = Math.floor(Math.random() * 10000).toString();
+            roomInput.value = room;
+        }
+        
+        // 先离开当前房间
+        await leaveRoom();
+        // 加入新房间
+        await joinRoom(room);
+    };
     
-    function formatTimeAgo(timestamp) {
-        const diff = Date.now() - timestamp;
-        if (diff < 60000) return '刚刚';
-        if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
-        return `${Math.floor(diff / 3600000)}小时前`;
-    }
+    copyRoomBtn.onclick = () => {
+        const roomToCopy = currentRoomId || roomInput.value.trim();
+        if (roomToCopy) {
+            navigator.clipboard.writeText(roomToCopy);
+            showMessage(`房间号 ${roomToCopy} 已复制`);
+        } else {
+            showMessage('请先输入或创建房间');
+        }
+    };
     
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-    
-    // 事件绑定
+    // 播放/暂停
     playPauseBtn.onclick = () => {
         if (video.paused) {
             video.play().catch(e => console.log('播放失败'));
         } else {
             video.pause();
         }
+        sendHeartbeat();
     };
     
-    refreshBtn.onclick = () => {
-        fetchRooms();
-        showMessage('房间列表已刷新');
+    forceSyncBtn.onclick = () => {
+        forceSync();
     };
     
-    createRoomBtn.onclick = createRoom;
-    
+    // 加载视频
     loadVideoBtn.onclick = () => {
         const url = videoUrl.value.trim();
         if (url) {
             video.src = url;
             video.load();
-            showMessage('视频加载中...');
+            showMessage('🎬 加载视频中...');
+            video.addEventListener('loadedmetadata', () => {
+                sendHeartbeat();
+            }, { once: true });
         }
     };
     
-    // 页面关闭时清理
-    window.addEventListener('beforeunload', () => {
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
-        if (refreshInterval) clearInterval(refreshInterval);
+    // 预设视频
+    document.querySelectorAll('.preset').forEach(btn => {
+        btn.onclick = () => {
+            const url = btn.dataset.url;
+            videoUrl.value = url;
+            loadVideoBtn.click();
+        };
     });
     
-    // 启动定时刷新房间列表
-    refreshInterval = setInterval(fetchRooms, 3000);
+    // 视频事件触发心跳
+    video.addEventListener('play', () => sendHeartbeat());
+    video.addEventListener('pause', () => sendHeartbeat());
+    video.addEventListener('seeked', () => sendHeartbeat());
     
-    // 初始加载
-    fetchRooms();
-    showMessage('✨ 点击「创建房间」或点击房间进入');
+    // 页面关闭时离开房间
+    window.addEventListener('beforeunload', () => {
+        if (currentRoomId) {
+            fetch(API_URL, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId: currentRoomId })
+            });
+        }
+    });
+    
+    // 随机默认房间号
+    roomInput.value = Math.floor(Math.random() * 10000);
+    
+    showMessage('✨ 输入相同房间号，两人都点「加入/创建房间」即可同步（延迟约2-3秒）');
 </script>
 </body>
 </html>

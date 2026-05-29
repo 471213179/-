@@ -245,11 +245,11 @@ async function joinRoom(roomId){
                 );
             }
 
-            // 只拉状态
+            // 降低请求频率
             pollInterval =
                 setInterval(
                     pollRoom,
-                    1000
+                    4000
                 );
 
             pollRoom();
@@ -293,7 +293,7 @@ async function pollRoom(){
 
         try{
 
-            // 视频链接同步
+            // 视频地址同步
             if(
                 room.videoUrl &&
                 room.videoUrl !==
@@ -309,7 +309,7 @@ async function pollRoom(){
                 video.load();
             }
 
-            // 只有暂停时才同步时间
+            // 只在暂停时同步时间
             if(video.paused){
 
                 const diff =
@@ -318,7 +318,8 @@ async function pollRoom(){
                         room.currentTime
                     );
 
-                if(diff > 0.5){
+                // 差距很大才同步
+                if(diff > 5){
 
                     video.currentTime =
                         room.currentTime;
@@ -388,29 +389,7 @@ async function syncNow(){
     }
 }
 
-// 播放同步
-video.addEventListener(
-    'play',
-    ()=>{
-
-        if(!isSyncing){
-            syncNow();
-        }
-    }
-);
-
-// 暂停同步
-video.addEventListener(
-    'pause',
-    ()=>{
-
-        if(!isSyncing){
-            syncNow();
-        }
-    }
-);
-
-// 拖动同步
+// 只保留拖动同步
 video.addEventListener(
     'seeked',
     ()=>{

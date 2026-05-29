@@ -245,11 +245,10 @@ async function joinRoom(roomId){
                 );
             }
 
-            // 降低请求频率
             pollInterval =
                 setInterval(
                     pollRoom,
-                    4000
+                    2000
                 );
 
             pollRoom();
@@ -309,8 +308,11 @@ async function pollRoom(){
                 video.load();
             }
 
-            // 只在暂停时同步时间
-            if(video.paused){
+            // 只有双方暂停时才同步时间
+            if(
+                video.paused &&
+                !room.isPlaying
+            ){
 
                 const diff =
                     Math.abs(
@@ -318,15 +320,14 @@ async function pollRoom(){
                         room.currentTime
                     );
 
-                // 差距很大才同步
-                if(diff > 5){
+                if(diff > 3){
 
                     video.currentTime =
                         room.currentTime;
                 }
             }
 
-            // 播放状态同步
+            // 播放同步
             if(
                 room.isPlaying &&
                 video.paused
@@ -336,6 +337,7 @@ async function pollRoom(){
                     .catch(()=>{});
             }
 
+            // 暂停同步
             if(
                 !room.isPlaying &&
                 !video.paused
@@ -375,7 +377,6 @@ async function syncNow(){
                 'Content-Type':'application/json'
             },
             body:JSON.stringify({
-                action:'heartbeat',
                 roomId:currentRoom,
                 clientId,
                 currentTime:video.currentTime,
@@ -389,7 +390,31 @@ async function syncNow(){
     }
 }
 
-// 只保留拖动同步
+// 播放同步
+video.addEventListener(
+    'play',
+    ()=>{
+
+        if(!isSyncing){
+
+            syncNow();
+        }
+    }
+);
+
+// 暂停同步
+video.addEventListener(
+    'pause',
+    ()=>{
+
+        if(!isSyncing){
+
+            syncNow();
+        }
+    }
+);
+
+// 拖动同步
 video.addEventListener(
     'seeked',
     ()=>{

@@ -35,7 +35,8 @@ export default async function handler(req, res) {
             clientId,
             currentTime,
             isPlaying,
-            videoUrl
+            videoUrl,
+            isHost
         } = req.body
 
         if (!roomId) {
@@ -62,17 +63,21 @@ export default async function handler(req, res) {
 
         } else {
 
-            room.currentTime =
-                currentTime ?? room.currentTime
+            // 只有房主可以更新状态
+            if (room.host === clientId) {
 
-            room.isPlaying =
-                isPlaying ?? room.isPlaying
+                room.currentTime =
+                    currentTime ?? room.currentTime
 
-            room.videoUrl =
-                videoUrl ?? room.videoUrl
+                room.isPlaying =
+                    isPlaying ?? room.isPlaying
 
-            room.updatedAt =
-                Date.now()
+                room.videoUrl =
+                    videoUrl ?? room.videoUrl
+
+                room.updatedAt =
+                    Date.now()
+            }
 
             room.viewers = 2
         }

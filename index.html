@@ -6,154 +6,143 @@
     <title>一起看 · 同步观影</title>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        body {
-            background: #0a0e1a;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            padding: 16px;
-            color: white;
+        body{
+            background:#0a0e1a;
+            color:white;
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+            min-height:100vh;
+            padding:16px;
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
+        .container{
+            max-width:1100px;
+            margin:0 auto;
         }
 
-        .video-wrapper {
-            background: #000;
-            border-radius: 20px;
-            overflow: hidden;
+        .video-wrapper{
+            background:#000;
+            border-radius:20px;
+            overflow:hidden;
         }
 
-        video {
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            display: block;
-            outline: none;
+        video{
+            width:100%;
+            aspect-ratio:16/9;
+            display:block;
+            outline:none;
         }
 
-        .controls {
-            background: #11161f;
-            padding: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-            justify-content: space-between;
-            border-radius: 0 0 20px 20px;
+        .controls{
+            background:#11161f;
+            padding:16px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+            border-radius:0 0 20px 20px;
         }
 
-        button {
-            background: #2a3650;
-            border: none;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-size: 14px;
-            cursor: pointer;
+        button{
+            border:none;
+            background:#2a3650;
+            color:white;
+            padding:8px 20px;
+            border-radius:40px;
+            cursor:pointer;
+            font-size:14px;
         }
 
-        button.primary {
-            background: #4f46e5;
+        button.primary{
+            background:#4f46e5;
         }
 
-        .status {
-            background: #1a2233;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .status{
+            background:#1a2233;
+            padding:6px 16px;
+            border-radius:40px;
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:13px;
         }
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: orange;
+        .dot{
+            width:8px;
+            height:8px;
+            border-radius:50%;
+            background:#f59e0b;
         }
 
-        .dot.connected {
-            background: #22c55e;
+        .dot.connected{
+            background:#22c55e;
         }
 
-        .room-panel {
-            background: #11161f;
-            margin-top: 16px;
-            padding: 16px;
-            border-radius: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
+        .room-panel{
+            margin-top:16px;
+            background:#11161f;
+            padding:16px;
+            border-radius:20px;
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            align-items:center;
         }
 
-        .room-panel input {
-            flex: 1;
-            background: #1a2233;
-            border: 1px solid #2f3b54;
-            padding: 10px 16px;
-            border-radius: 40px;
-            color: white;
-            font-size: 16px;
-            text-align: center;
+        .room-panel input{
+            flex:1;
+            background:#1a2233;
+            border:1px solid #2f3b54;
+            padding:10px 16px;
+            border-radius:40px;
+            color:white;
+            font-size:16px;
+            text-align:center;
         }
 
-        .video-row {
-            background: #0c111b;
-            margin-top: 12px;
-            padding: 12px 16px;
-            border-radius: 20px;
-            display: flex;
-            gap: 10px;
+        .video-row{
+            margin-top:12px;
+            background:#0c111b;
+            padding:12px 16px;
+            border-radius:20px;
+            display:flex;
+            gap:10px;
         }
 
-        .video-row input {
-            flex: 1;
-            background: #1a2233;
-            border: 1px solid #2f3b54;
-            padding: 8px 14px;
-            border-radius: 40px;
-            color: white;
+        .video-row input{
+            flex:1;
+            background:#1a2233;
+            border:1px solid #2f3b54;
+            padding:8px 14px;
+            border-radius:40px;
+            color:white;
         }
 
-        .viewer-count {
-            background: #1a2233;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 12px;
+        .viewer-count{
+            background:#1a2233;
+            padding:6px 12px;
+            border-radius:40px;
+            font-size:12px;
         }
 
-        .sync-badge {
-            background: #2a3650;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
+        .sync-badge{
+            background:#2a3650;
+            padding:4px 10px;
+            border-radius:20px;
+            font-size:11px;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #5b6a8c;
-        }
-
-        @media (max-width: 640px) {
-            body {
-                padding: 12px;
-            }
-
-            button {
-                padding: 6px 14px;
-                font-size: 12px;
-            }
+        .footer{
+            text-align:center;
+            margin-top:20px;
+            font-size:12px;
+            color:#5b6a8c;
         }
     </style>
 </head>
@@ -198,7 +187,7 @@
         <input
             type="text"
             id="roomInput"
-            placeholder="房间号"
+            placeholder="输入房间号"
         >
 
         <button id="joinBtn" class="primary">
@@ -241,17 +230,39 @@
 const API_URL = '/api/rooms';
 
 const video = document.getElementById('video');
-const playPauseBtn = document.getElementById('playPauseBtn');
-const forceSyncBtn = document.getElementById('forceSyncBtn');
-const joinBtn = document.getElementById('joinBtn');
-const copyRoomBtn = document.getElementById('copyRoomBtn');
-const roomInput = document.getElementById('roomInput');
-const statusText = document.getElementById('statusText');
-const statusDot = document.getElementById('statusDot');
-const syncBadge = document.getElementById('syncBadge');
-const videoUrl = document.getElementById('videoUrl');
-const loadVideoBtn = document.getElementById('loadVideoBtn');
-const viewerCountSpan = document.getElementById('viewerCount');
+
+const playPauseBtn =
+    document.getElementById('playPauseBtn');
+
+const forceSyncBtn =
+    document.getElementById('forceSyncBtn');
+
+const joinBtn =
+    document.getElementById('joinBtn');
+
+const copyRoomBtn =
+    document.getElementById('copyRoomBtn');
+
+const roomInput =
+    document.getElementById('roomInput');
+
+const statusText =
+    document.getElementById('statusText');
+
+const statusDot =
+    document.getElementById('statusDot');
+
+const syncBadge =
+    document.getElementById('syncBadge');
+
+const videoUrl =
+    document.getElementById('videoUrl');
+
+const loadVideoBtn =
+    document.getElementById('loadVideoBtn');
+
+const viewerCountSpan =
+    document.getElementById('viewerCount');
 
 let currentRoomId = null;
 
@@ -267,59 +278,66 @@ let pollInterval = null;
 let isSyncing = false;
 let isRoomJoined = false;
 
-function showMessage(msg) {
-    console.log(msg);
-}
+function updateStatus(connected, room=''){
 
-function updateStatus(connected, room = '') {
-    if (connected) {
-        statusText.innerHTML = `✅ 房间: ${room}`;
-        statusDot.className = 'dot connected';
-    } else {
-        statusText.innerHTML = '未连接';
-        statusDot.className = 'dot';
+    if(connected){
+
+        statusText.innerHTML =
+            `✅ 房间: ${room}`;
+
+        statusDot.className =
+            'dot connected';
+
+    }else{
+
+        statusText.innerHTML =
+            '未连接';
+
+        statusDot.className =
+            'dot';
     }
 }
 
-async function sendHeartbeat() {
+async function sendHeartbeat(){
 
-    if (!currentRoomId || !isRoomJoined) return;
+    if(!currentRoomId || !isRoomJoined) return;
 
-    try {
+    try{
 
-        await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+        await fetch(API_URL,{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
             },
-            body: JSON.stringify({
-                action: 'heartbeat',
-                roomId: currentRoomId,
+            body:JSON.stringify({
+                action:'heartbeat',
+                roomId:currentRoomId,
                 clientId,
-                currentTime: video.currentTime,
-                isPlaying: !video.paused,
-                videoUrl: videoUrl.value
+                currentTime:video.currentTime,
+                isPlaying:!video.paused,
+                videoUrl:videoUrl.value
             })
         });
 
-    } catch (e) {
+    }catch(e){
         console.log(e);
     }
 }
 
-async function pollRoom() {
+async function pollRoom(){
 
-    if (!currentRoomId || !isRoomJoined) return;
+    if(!currentRoomId || !isRoomJoined) return;
 
-    try {
+    try{
 
-        const res = await fetch(
-            `${API_URL}?roomId=${currentRoomId}`
-        );
+        const res =
+            await fetch(
+                `${API_URL}?roomId=${currentRoomId}`
+            );
 
         const data = await res.json();
 
-        if (!data.success || !data.room) {
+        if(!data.success || !data.room){
             return;
         }
 
@@ -328,182 +346,217 @@ async function pollRoom() {
         viewerCountSpan.innerHTML =
             `👥 ${room.viewers || 1} 人在线`;
 
-        if (room.viewers <= 1) {
-            syncBadge.innerHTML = '等待对方加入';
+        if(room.viewers <= 1){
+
+            syncBadge.innerHTML =
+                '等待对方加入';
+
             return;
         }
 
-        syncBadge.innerHTML = '🟢 已同步';
+        syncBadge.innerHTML =
+            '🟢 已同步';
 
-        if (isSyncing) return;
+        if(isSyncing) return;
 
         isSyncing = true;
 
-        try {
+        try{
 
-            // 同步视频地址
-            if (
+            // 视频地址同步
+            if(
                 room.videoUrl &&
                 room.videoUrl !== videoUrl.value
-            ) {
+            ){
 
-                videoUrl.value = room.videoUrl;
+                videoUrl.value =
+                    room.videoUrl;
 
-                const wasPlaying = !video.paused;
+                const wasPlaying =
+                    !video.paused;
 
-                video.src = room.videoUrl;
+                video.src =
+                    room.videoUrl;
 
                 video.load();
 
-                if (wasPlaying) {
+                if(wasPlaying){
+
                     video.addEventListener(
                         'canplay',
                         () => video.play(),
-                        { once: true }
+                        { once:true }
                     );
                 }
             }
 
-            // 同步时间
+            // 时间同步（只在差距很大时）
             const timeDiff =
                 Math.abs(
                     video.currentTime -
                     room.currentTime
                 );
 
-            if (
-                timeDiff > 0.3 &&
+            if(
+                timeDiff > 1.2 &&
                 room.currentTime < video.duration
-            ) {
-                video.currentTime = room.currentTime;
+            ){
+
+                video.currentTime =
+                    room.currentTime;
             }
 
-            // 同步播放状态
-            if (
+            // 播放状态同步
+            if(
                 video.paused &&
                 room.isPlaying
-            ) {
-                await video.play().catch(() => {});
+            ){
+
+                await video.play()
+                    .catch(()=>{});
             }
 
-            if (
+            if(
                 !video.paused &&
                 !room.isPlaying
-            ) {
+            ){
+
                 video.pause();
             }
 
-        } finally {
+        }finally{
 
-            setTimeout(() => {
+            setTimeout(()=>{
+
                 isSyncing = false;
-            }, 200);
 
+            },300);
         }
 
-    } catch (e) {
+    }catch(e){
         console.log(e);
     }
 }
 
-async function joinRoom(roomId) {
+async function joinRoom(roomId){
 
-    try {
+    try{
 
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                roomId,
-                clientId,
-                currentTime: video.currentTime,
-                isPlaying: !video.paused,
-                videoUrl: videoUrl.value
-            })
-        });
+        const res =
+            await fetch(API_URL,{
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify({
+                    roomId,
+                    clientId,
+                    currentTime:video.currentTime,
+                    isPlaying:!video.paused,
+                    videoUrl:videoUrl.value
+                })
+            });
 
         const data = await res.json();
 
-        if (data.success) {
+        if(data.success){
 
             currentRoomId = roomId;
+
             isRoomJoined = true;
 
-            updateStatus(true, roomId);
+            updateStatus(true,roomId);
 
-            syncBadge.innerHTML = '🟢 同步中';
+            syncBadge.innerHTML =
+                '🟢 同步中';
 
-            if (heartbeatInterval) {
-                clearInterval(heartbeatInterval);
+            if(heartbeatInterval){
+                clearInterval(
+                    heartbeatInterval
+                );
             }
 
-            if (pollInterval) {
-                clearInterval(pollInterval);
+            if(pollInterval){
+                clearInterval(
+                    pollInterval
+                );
             }
 
-            // 更实时
+            // 降低同步频率
             heartbeatInterval =
-                setInterval(sendHeartbeat, 300);
+                setInterval(
+                    sendHeartbeat,
+                    1000
+                );
 
             pollInterval =
-                setInterval(pollRoom, 300);
+                setInterval(
+                    pollRoom,
+                    800
+                );
 
             pollRoom();
         }
 
-    } catch (e) {
+    }catch(e){
         console.log(e);
     }
 }
 
-async function leaveRoom() {
+async function leaveRoom(){
 
-    if (!currentRoomId) return;
+    if(!currentRoomId) return;
 
-    try {
+    try{
 
-        await fetch(API_URL, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
+        await fetch(API_URL,{
+            method:'DELETE',
+            headers:{
+                'Content-Type':'application/json'
             },
-            body: JSON.stringify({
-                roomId: currentRoomId,
+            body:JSON.stringify({
+                roomId:currentRoomId,
                 clientId
             })
         });
 
-    } catch (e) {
+    }catch(e){
         console.log(e);
     }
 
-    clearInterval(heartbeatInterval);
-    clearInterval(pollInterval);
+    clearInterval(
+        heartbeatInterval
+    );
+
+    clearInterval(
+        pollInterval
+    );
 
     currentRoomId = null;
+
     isRoomJoined = false;
 
     updateStatus(false);
 }
 
-joinBtn.onclick = async () => {
+joinBtn.onclick = async ()=>{
 
-    let room = roomInput.value.trim();
+    let room =
+        roomInput.value.trim();
 
-    if (!room) {
+    if(!room){
+
         room = Math.floor(
-            Math.random() * 10000
+            Math.random()*10000
         ).toString();
 
         roomInput.value = room;
     }
 
-    if (
+    if(
         currentRoomId === room &&
         isRoomJoined
-    ) {
+    ){
         return;
     }
 
@@ -512,42 +565,50 @@ joinBtn.onclick = async () => {
     await joinRoom(room);
 };
 
-copyRoomBtn.onclick = () => {
+copyRoomBtn.onclick = ()=>{
 
     const room =
         currentRoomId ||
         roomInput.value.trim();
 
-    if (!room) return;
+    if(!room) return;
 
-    navigator.clipboard.writeText(room);
+    navigator.clipboard
+        .writeText(room);
 };
 
-playPauseBtn.onclick = async () => {
+playPauseBtn.onclick = async ()=>{
 
-    if (video.paused) {
-        await video.play().catch(() => {});
-    } else {
+    if(video.paused){
+
+        await video.play()
+            .catch(()=>{});
+
+    }else{
+
         video.pause();
     }
 
     sendHeartbeat();
 };
 
-forceSyncBtn.onclick = async () => {
+forceSyncBtn.onclick = async ()=>{
 
     await sendHeartbeat();
 
-    setTimeout(() => {
+    setTimeout(()=>{
+
         pollRoom();
-    }, 100);
+
+    },100);
 };
 
-loadVideoBtn.onclick = async () => {
+loadVideoBtn.onclick = ()=>{
 
-    const url = videoUrl.value.trim();
+    const url =
+        videoUrl.value.trim();
 
-    if (!url) return;
+    if(!url) return;
 
     video.src = url;
 
@@ -558,58 +619,67 @@ loadVideoBtn.onclick = async () => {
 
 video.addEventListener(
     'play',
-    () => sendHeartbeat()
+    ()=>sendHeartbeat()
 );
 
 video.addEventListener(
     'pause',
-    () => sendHeartbeat()
+    ()=>sendHeartbeat()
 );
 
 video.addEventListener(
     'seeked',
-    () => sendHeartbeat()
+    ()=>sendHeartbeat()
 );
 
-// 更实时同步
+// 不再疯狂同步
 let lastSync = 0;
 
-video.addEventListener('timeupdate', () => {
+video.addEventListener(
+    'timeupdate',
+    ()=>{
 
-    const now = Date.now();
+        const now = Date.now();
 
-    if (now - lastSync > 500) {
+        if(
+            now - lastSync > 1500
+        ){
 
-        lastSync = now;
+            lastSync = now;
 
-        sendHeartbeat();
+            sendHeartbeat();
+        }
     }
-});
+);
 
 window.addEventListener(
     'beforeunload',
-    () => {
+    ()=>{
 
-        if (
+        if(
             currentRoomId &&
             isRoomJoined
-        ) {
+        ){
 
-            navigator.sendBeacon(
-                API_URL,
-                JSON.stringify({
-                    roomId: currentRoomId,
+            fetch(API_URL,{
+                method:'DELETE',
+                headers:{
+                    'Content-Type':
+                        'application/json'
+                },
+                body:JSON.stringify({
+                    roomId:currentRoomId,
                     clientId
                 })
-            );
+            });
         }
     }
 );
 
 roomInput.value =
-    Math.floor(Math.random() * 10000);
-
-showMessage('同步观影已启动');
+    Math.floor(
+        Math.random()*10000
+    );
 
 </script>
 

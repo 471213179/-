@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>同步观影 · 支持MP4/M3U8/TS</title>
+<title>同步观影</title>
 
 <style>
 
@@ -29,7 +29,6 @@ body{
     background:black;
     border-radius:20px;
     overflow:hidden;
-    position:relative;
 }
 
 video{
@@ -56,19 +55,10 @@ button{
     padding:10px 18px;
     border-radius:40px;
     cursor:pointer;
-    transition:0.2s;
-}
-
-button:hover{
-    background:#3a4660;
 }
 
 button.primary{
     background:#4f46e5;
-}
-
-button.primary:hover{
-    background:#6366f1;
 }
 
 input{
@@ -78,10 +68,6 @@ input{
     padding:10px 14px;
     border-radius:40px;
     outline:none;
-}
-
-input:focus{
-    border-color:#4f46e5;
 }
 
 #roomInput{
@@ -109,46 +95,7 @@ input:focus{
     font-size:13px;
 }
 
-.toast{
-    position:fixed;
-    bottom:30px;
-    left:50%;
-    transform:translateX(-50%);
-    background:#4f46e5;
-    padding:8px 20px;
-    border-radius:40px;
-    font-size:13px;
-    z-index:9999;
-    animation:fadeInOut 2s ease;
-}
-
-.toast.error{
-    background:#dc2626;
-}
-
-@keyframes fadeInOut{
-    0%{opacity:0;transform:translateX(-50%) translateY(10px);}
-    15%{opacity:1;transform:translateX(-50%) translateY(0);}
-    85%{opacity:1;}
-    100%{opacity:0;transform:translateX(-50%) translateY(-10px);}
-}
-
-.format-badge{
-    position:absolute;
-    bottom:10px;
-    right:10px;
-    background:rgba(0,0,0,0.6);
-    padding:4px 8px;
-    border-radius:20px;
-    font-size:10px;
-    pointer-events:none;
-}
-
 </style>
-
-<!-- HLS.js 支持 m3u8 播放 -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
 </head>
 
 <body>
@@ -162,11 +109,9 @@ input:focus{
             controls
             preload="metadata"
             controlsList="nodownload"
-            crossorigin="anonymous"
         >
             <source src="https://media.w3.org/2010/05/sintel/trailer.mp4">
         </video>
-        <div class="format-badge" id="formatBadge">📹 MP4</div>
 
     </div>
 
@@ -181,15 +126,15 @@ input:focus{
             id="joinBtn"
             class="primary"
         >
-            🚪 创建房间
+            创建房间
         </button>
 
         <button id="copyBtn">
-            📋 复制房间号
+            复制房间号
         </button>
 
         <button id="syncBtn">
-            🔄 强制同步
+            强制同步
         </button>
 
         <div
@@ -203,7 +148,7 @@ input:focus{
             class="status"
             id="status"
         >
-            ⚪ 未连接
+            未连接
         </div>
 
     </div>
@@ -211,7 +156,7 @@ input:focus{
     <input
         id="videoUrl"
         value="https://media.w3.org/2010/05/sintel/trailer.mp4"
-        placeholder="支持: MP4 / M3U8 / TS 直链"
+        placeholder="输入 MP4 视频链接"
     >
 
 </div>
@@ -244,9 +189,6 @@ const viewerCount =
 const videoUrl =
     document.getElementById('videoUrl');
 
-const formatBadge =
-    document.getElementById('formatBadge');
-
 let currentRoom = null;
 
 let isSyncing = false;
@@ -254,8 +196,6 @@ let isSyncing = false;
 let pollInterval = null;
 
 let isHost = false;
-
-let hls = null; // HLS 实例
 
 const clientId =
     localStorage.getItem('clientId') ||
@@ -266,70 +206,9 @@ localStorage.setItem(
     clientId
 );
 
-function showMessage(msg, isError = false){
-    const oldToast = document.querySelector('.toast');
-    if(oldToast) oldToast.remove();
-    
-    const toast = document.createElement('div');
-    toast.className = 'toast' + (isError ? ' error' : '');
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.remove(), 2500);
-}
-
 function updateStatus(text){
-    statusEl.innerHTML = text;
-}
 
-// 智能加载视频（支持 MP4 / M3U8 / TS）
-function loadVideo(url){
-    // 销毁旧的 HLS 实例
-    if(hls){
-        hls.destroy();
-        hls = null;
-    }
-    
-    // 检测格式并更新徽章
-    if(url.includes('.m3u8')){
-        formatBadge.innerHTML = '📡 M3U8 流';
-        
-        if(Hls.isSupported()){
-            hls = new Hls({
-                enableWorker: true,
-                lowLatencyMode: true
-            });
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                showMessage('✅ M3U8 加载成功');
-                video.play().catch(() => {});
-            });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                console.error('HLS错误:', data);
-                showMessage('❌ M3U8 加载失败', true);
-            });
-            return true;
-        } else if(video.canPlayType('application/vnd.apple.mpegurl')){
-            video.src = url;
-            return true;
-        } else {
-            showMessage('❌ 当前浏览器不支持 M3U8', true);
-            return false;
-        }
-    }
-    else if(url.includes('.ts')){
-        formatBadge.innerHTML = '🎬 TS 直链';
-        video.src = url;
-        video.load();
-        return true;
-    }
-    else{
-        formatBadge.innerHTML = '🎬 MP4';
-        video.src = url;
-        video.load();
-        return true;
-    }
+    statusEl.innerHTML = text;
 }
 
 async function joinRoom(roomId){
@@ -347,7 +226,8 @@ async function joinRoom(roomId){
                     clientId,
                     currentTime:video.currentTime,
                     isPlaying:!video.paused,
-                    videoUrl:videoUrl.value
+                    videoUrl:videoUrl.value,
+                    isHost
                 })
             });
 
@@ -359,19 +239,12 @@ async function joinRoom(roomId){
             currentRoom = roomId;
 
             isHost =
-                data.room?.host === clientId ||
-                data.isMaster;
+                data.room.host === clientId;
 
             updateStatus(
                 isHost
-                ? `👑 房主: ${roomId}`
-                : `👤 成员: ${roomId}`
-            );
-
-            showMessage(
-                isHost
-                ? `✅ 你是房主，可以控制播放`
-                : `✅ 已加入房间，将自动同步`
+                ? `房主: ${roomId}`
+                : `已加入: ${roomId}`
             );
 
             if(pollInterval){
@@ -380,12 +253,10 @@ async function joinRoom(roomId){
                 );
             }
 
-            // 成员轮询间隔 2秒，房主 5秒
-            const interval = isHost ? 5000 : 2000;
             pollInterval =
                 setInterval(
                     pollRoom,
-                    interval
+                    2000
                 );
 
             pollRoom();
@@ -393,7 +264,6 @@ async function joinRoom(roomId){
 
     }catch(e){
         console.log(e);
-        showMessage('❌ 加入房间失败', true);
     }
 }
 
@@ -424,7 +294,7 @@ async function pollRoom(){
         viewerCount.innerHTML =
             `👥 ${room.viewers || 1} 人`;
 
-        // 房主不接收同步（只更新人数）
+        // 房主不接收同步
         if(isHost){
             return;
         }
@@ -445,12 +315,13 @@ async function pollRoom(){
                 videoUrl.value =
                     room.videoUrl;
 
-                loadVideo(room.videoUrl);
-                
-                showMessage('🎬 同步视频中...');
+                video.src =
+                    room.videoUrl;
+
+                video.load();
             }
 
-            // 播放/暂停同步
+            // 播放同步
             if(
                 room.isPlaying &&
                 video.paused
@@ -460,6 +331,7 @@ async function pollRoom(){
                     .catch(()=>{});
             }
 
+            // 暂停同步
             if(
                 !room.isPlaying &&
                 !video.paused
@@ -468,14 +340,14 @@ async function pollRoom(){
                 video.pause();
             }
 
-            // 时间同步（差异大于 0.5 秒）
+            // 时间同步
             const diff =
                 Math.abs(
                     video.currentTime -
                     room.currentTime
                 );
 
-            if(diff > 0.5 && room.currentTime < video.duration){
+            if(diff > 1.5){
 
                 video.currentTime =
                     room.currentTime;
@@ -487,7 +359,7 @@ async function pollRoom(){
 
                 isSyncing = false;
 
-            },200);
+            },300);
         }
 
     }catch(e){
@@ -498,9 +370,16 @@ async function pollRoom(){
 async function syncNow(){
 
     // 只有房主上传状态
-    if(!isHost) return;
+    if(!isHost){
+        return;
+    }
 
-    if(!currentRoom || isSyncing) return;
+    if(
+        !currentRoom ||
+        isSyncing
+    ){
+        return;
+    }
 
     try{
 
@@ -510,12 +389,12 @@ async function syncNow(){
                 'Content-Type':'application/json'
             },
             body:JSON.stringify({
-                action:'heartbeat',
                 roomId:currentRoom,
                 clientId,
                 currentTime:video.currentTime,
                 isPlaying:!video.paused,
-                videoUrl:videoUrl.value
+                videoUrl:videoUrl.value,
+                isHost
             })
         });
 
@@ -528,6 +407,7 @@ async function syncNow(){
 video.addEventListener(
     'play',
     ()=>{
+
         syncNow();
     }
 );
@@ -536,21 +416,21 @@ video.addEventListener(
 video.addEventListener(
     'pause',
     ()=>{
+
         syncNow();
     }
 );
 
-// 拖动同步（防抖）
-let seekTimer;
+// 拖动同步
 video.addEventListener(
     'seeked',
     ()=>{
-        clearTimeout(seekTimer);
-        seekTimer = setTimeout(() => syncNow(), 100);
+
+        syncNow();
     }
 );
 
-// 每秒更新一次时间（仅房主）
+// 每秒更新一次时间
 setInterval(()=>{
 
     if(
@@ -562,11 +442,13 @@ setInterval(()=>{
         syncNow();
     }
 
-},2000);
+},1000);
 
-// 创建/加入房间
+// 创建房间
 joinBtn.onclick =
     async ()=>{
+
+        isHost = true;
 
         let room =
             roomInput.value.trim();
@@ -582,26 +464,6 @@ joinBtn.onclick =
                 room;
         }
 
-        // 先离开旧房间
-        if(currentRoom){
-            await fetch(API_URL,{
-                method:'DELETE',
-                headers:{
-                    'Content-Type':'application/json'
-                },
-                body:JSON.stringify({
-                    roomId:currentRoom,
-                    clientId
-                })
-            });
-            
-            if(pollInterval){
-                clearInterval(pollInterval);
-                pollInterval = null;
-            }
-        }
-
-        isHost = true;
         await joinRoom(room);
     };
 
@@ -612,32 +474,15 @@ roomInput.addEventListener(
 
         if(e.key === 'Enter'){
 
+            isHost = false;
+
             const room =
                 roomInput.value.trim();
 
-            if(!room) return;
+            if(room){
 
-            // 先离开旧房间
-            if(currentRoom){
-                await fetch(API_URL,{
-                    method:'DELETE',
-                    headers:{
-                        'Content-Type':'application/json'
-                    },
-                    body:JSON.stringify({
-                        roomId:currentRoom,
-                        clientId
-                    })
-                });
-                
-                if(pollInterval){
-                    clearInterval(pollInterval);
-                    pollInterval = null;
-                }
+                await joinRoom(room);
             }
-
-            isHost = false;
-            await joinRoom(room);
         }
     }
 );
@@ -653,39 +498,24 @@ copyBtn.onclick =
 
         navigator.clipboard
             .writeText(room);
-            
-        showMessage(`📋 房间号 ${room} 已复制`);
     };
 
 syncBtn.onclick =
     ()=>{
 
-        if(isHost){
-            syncNow();
-            showMessage('📡 已广播同步信号');
-        } else {
-            pollRoom();
-            showMessage('📡 正在同步房主进度');
-        }
+        pollRoom();
     };
 
-// 加载视频（支持 MP4 / M3U8 / TS）
 videoUrl.addEventListener(
     'change',
     ()=>{
 
-        const url = videoUrl.value.trim();
-        
-        if(!url) return;
-        
-        loadVideo(url);
-        
-        // 如果是房主，广播视频地址
-        if(isHost && currentRoom){
-            setTimeout(() => syncNow(), 500);
-        }
-        
-        showMessage('🎬 加载视频中...');
+        video.src =
+            videoUrl.value;
+
+        video.load();
+
+        syncNow();
     }
 );
 
@@ -702,8 +532,7 @@ window.addEventListener(
                     'application/json'
             },
             body:JSON.stringify({
-                roomId:currentRoom,
-                clientId
+                roomId:currentRoom
             })
         });
     }
@@ -713,9 +542,6 @@ roomInput.value =
     Math.floor(
         Math.random()*10000
     );
-
-// 初始化提示
-showMessage('✨ 支持 MP4 / M3U8 / TS 视频源');
 
 </script>
 

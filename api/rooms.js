@@ -1,5 +1,15 @@
-// api/rooms.js - 房间管理 API
+// api/rooms.js - Vercel 优化版
 let rooms = new Map();
+
+// 清理过期房间（每分钟）
+setInterval(() => {
+    const now = Date.now();
+    for (const [roomId, room] of rooms.entries()) {
+        if (now - room.lastHeartbeat > 15000) {
+            rooms.delete(roomId);
+        }
+    }
+}, 60000);
 
 export default function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,30 +20,71 @@ export default function handler(req, res) {
         return res.status(200).end();
     }
     
-    // GET - 获取房间信息
+    // GET - 获取房间状态（长轮询）
     if (req.method === 'GET') {
-        const { roomId } = req.query;
-        if (roomId && rooms.has(roomId)) {
-            const room = rooms.get(roomId);
-            return res.status(200).json({
-                success: true,
-                room: {
-                    roomId: room.roomId,
-                    roomName: room.roomName,
-                    currentTime: room.currentTime,
-                    isPlaying: room.isPlaying,
-                    videoUrl: room.videoUrl,
-                    viewers: room.viewers,
-                    masterId: room.masterId
-                }
-            });
+        const { roomId, lastUpdate } = req.query;
+        
+        if (!roomId || !rooms.has(roomId)) {
+            return res.status(200).json({ success: false, room: null });
         }
-        return res.status(200).json([]);
+        
+        const room = rooms.get(roomId);
+        const lastSync = parseInt(lastUpdate) || 0;
+        
+        // 如果没有更新，等待最多 2 秒（长轮询）
+        if (room.lastUpdate <= lastSync && room.viewers > 1) {
+            // 长轮询：等待更新
+            const timeout = setTimeout(() => {
+                res.status(200).json({
+                    success: true,
+                    room: {
+                        currentTime: room.currentTime,
+                        isPlaying: room.isPlaying,
+                        videoUrl: room.videoUrl,
+                        viewers: room.viewers,
+                        masterId: room.masterId,
+                        lastUpdate: room.lastUpdate
+                    }
+                });
+            }, 2000);
+            
+            // 如果期间有更新，提前返回
+            const checkInterval = setInterval(() => {
+                if (room.lastUpdate > lastSync) {
+                    clearTimeout(timeout);
+                    clearInterval(checkInterval);
+                    res.status(200).json({
+                        success: true,
+                        room: {
+                            currentTime: room.currentTime,
+                            isPlaying: room.isPlaying,
+                            videoUrl: room.videoUrl,
+                            viewers: room.viewers,
+                            masterId: room.masterId,
+                            lastUpdate: room.lastUpdate
+                        }
+                    });
+                }
+            }, 50);
+            return;
+        }
+        
+        return res.status(200).json({
+            success: true,
+            room: {
+                currentTime: room.currentTime,
+                isPlaying: room.isPlaying,
+                videoUrl: room.videoUrl,
+                viewers: room.viewers,
+                masterId: room.masterId,
+                lastUpdate: room.lastUpdate
+            }
+        });
     }
     
-    // POST - 加入/心跳/更新
+    // POST - 更新房间状态
     if (req.method === 'POST') {
-        const { roomId, roomName, currentTime, isPlaying, videoUrl, action, clientId } = req.body;
+        const { roomId, clientId, currentTime, isPlaying, videoUrl, action, roomName } = req.body;
         
         if (!roomId || !clientId) {
             return res.status(400).json({ error: 'roomId and clientId required' });
@@ -43,16 +94,13 @@ export default function handler(req, res) {
         if (action === 'heartbeat') {
             if (rooms.has(roomId)) {
                 const room = rooms.get(roomId);
-                // 只有房主才能更新房间状态
                 if (room.masterId === clientId) {
                     room.currentTime = currentTime;
                     room.isPlaying = isPlaying;
                     if (videoUrl) room.videoUrl = videoUrl;
+                    room.lastUpdate = Date.now();
                 }
-                // 更新心跳时间
-                if (!room.heartbeats) room.heartbeats = {};
-                room.heartbeats[clientId] = Date.now();
-                room.viewers = Object.keys(room.heartbeats).length;
+                room.lastHeartbeat = Date.now();
                 rooms.set(roomId, room);
             }
             return res.status(200).json({ success: true });
@@ -60,7 +108,6 @@ export default function handler(req, res) {
         
         // 加入房间
         if (!rooms.has(roomId)) {
-            // 创建房间，第一个加入的是房主
             rooms.set(roomId, {
                 roomId,
                 roomName: roomName || `房间 ${roomId.slice(-4)}`,
@@ -69,18 +116,26 @@ export default function handler(req, res) {
                 videoUrl: videoUrl || 'https://media.w3.org/2010/05/sintel/trailer.mp4',
                 viewers: 1,
                 masterId: clientId,
-                heartbeats: { [clientId]: Date.now() },
-                createdAt: Date.now()
+                clients: new Set([clientId]),
+                createdAt: Date.now(),
+                lastUpdate: Date.now(),
+                lastHeartbeat: Date.now()
             });
         } else {
             const room = rooms.get(roomId);
-            if (!room.heartbeats) room.heartbeats = {};
-            room.heartbeats[clientId] = Date.now();
-            room.viewers = Object.keys(room.heartbeats).length;
+            if (!room.clients.has(clientId)) {
+                room.clients.add(clientId);
+                room.viewers = room.clients.size;
+            }
+            room.lastHeartbeat = Date.now();
             rooms.set(roomId, room);
         }
         
-        return res.status(200).json({ success: true, room: rooms.get(roomId) });
+        return res.status(200).json({ 
+            success: true, 
+            isMaster: rooms.get(roomId).masterId === clientId,
+            room: rooms.get(roomId)
+        });
     }
     
     // DELETE - 离开房间
@@ -88,21 +143,17 @@ export default function handler(req, res) {
         const { roomId, clientId } = req.body;
         if (roomId && rooms.has(roomId)) {
             const room = rooms.get(roomId);
-            if (room.heartbeats) {
-                delete room.heartbeats[clientId];
-                room.viewers = Object.keys(room.heartbeats).length;
-                
-                // 如果房主离开，转让给其他人
-                if (room.masterId === clientId && room.viewers > 0) {
-                    const newMaster = Object.keys(room.heartbeats)[0];
-                    room.masterId = newMaster;
-                }
-                
-                if (room.viewers === 0) {
-                    rooms.delete(roomId);
-                } else {
-                    rooms.set(roomId, room);
-                }
+            room.clients.delete(clientId);
+            room.viewers = room.clients.size;
+            
+            if (room.masterId === clientId && room.viewers > 0) {
+                room.masterId = Array.from(room.clients)[0];
+            }
+            
+            if (room.viewers === 0) {
+                rooms.delete(roomId);
+            } else {
+                rooms.set(roomId, room);
             }
         }
         return res.status(200).json({ success: true });

@@ -103,7 +103,6 @@ input{
 <div class="container">
 
     <div class="video-wrapper">
-
         <video
             id="video"
             controls
@@ -112,51 +111,24 @@ input{
         >
             <source src="https://media.w3.org/2010/05/sintel/trailer.mp4">
         </video>
-
     </div>
 
     <div class="controls">
 
-        <input
-            id="roomInput"
-            placeholder="输入房间号"
-        >
+        <input id="roomInput" placeholder="输入房间号">
 
-        <button
-            id="joinBtn"
-            class="primary"
-        >
-            创建房间
-        </button>
+        <button id="joinBtn" class="primary">创建房间</button>
+        <button id="copyBtn">复制房间号</button>
+        <button id="syncBtn">强制同步</button>
 
-        <button id="copyBtn">
-            复制房间号
-        </button>
-
-        <button id="syncBtn">
-            强制同步
-        </button>
-
-        <div
-            class="viewer"
-            id="viewerCount"
-        >
-            👥 未加入
-        </div>
-
-        <div
-            class="status"
-            id="status"
-        >
-            未连接
-        </div>
+        <div class="viewer" id="viewerCount">👥 未加入</div>
+        <div class="status" id="status">未连接</div>
 
     </div>
 
-    <input
-        id="videoUrl"
+    <input id="videoUrl"
         value="https://media.w3.org/2010/05/sintel/trailer.mp4"
-        placeholder="输入 MP4 视频链接"
+        placeholder="输入视频直链"
     >
 
 </div>
@@ -165,105 +137,99 @@ input{
 
 const API_URL = '/api/rooms';
 
-const video =
-    document.getElementById('video');
-
-const roomInput =
-    document.getElementById('roomInput');
-
-const joinBtn =
-    document.getElementById('joinBtn');
-
-const copyBtn =
-    document.getElementById('copyBtn');
-
-const syncBtn =
-    document.getElementById('syncBtn');
-
-const statusEl =
-    document.getElementById('status');
-
-const viewerCount =
-    document.getElementById('viewerCount');
-
-const videoUrl =
-    document.getElementById('videoUrl');
+const video = document.getElementById('video');
+const roomInput = document.getElementById('roomInput');
+const joinBtn = document.getElementById('joinBtn');
+const copyBtn = document.getElementById('copyBtn');
+const syncBtn = document.getElementById('syncBtn');
+const statusEl = document.getElementById('status');
+const viewerCount = document.getElementById('viewerCount');
+const videoUrl = document.getElementById('videoUrl');
 
 let currentRoom = null;
-
 let isSyncing = false;
-
 let pollInterval = null;
-
 let isHost = false;
 
 const clientId =
     localStorage.getItem('clientId') ||
     Math.random().toString(36).slice(2);
 
-localStorage.setItem(
-    'clientId',
-    clientId
-);
+localStorage.setItem('clientId', clientId);
 
 function updateStatus(text){
-
     statusEl.innerHTML = text;
+}
+
+//
+// ⭐⭐⭐ 核心升级：统一视频加载函数
+//
+function loadVideo(url){
+
+    if(!url) return;
+
+    const lower = url.split('?')[0].toLowerCase();
+
+    video.innerHTML = '';
+
+    const source = document.createElement('source');
+    source.src = url;
+
+    if (lower.endsWith('.mp4')) {
+        source.type = 'video/mp4';
+    }
+    else if (lower.endsWith('.webm')) {
+        source.type = 'video/webm';
+    }
+    else if (lower.endsWith('.ogg') || lower.endsWith('.ogv')) {
+        source.type = 'video/ogg';
+    }
+    else if (lower.endsWith('.m4v')) {
+        source.type = 'video/mp4';
+    }
+    else {
+        // 让浏览器自己判断
+        source.removeAttribute('type');
+    }
+
+    video.appendChild(source);
+    video.load();
 }
 
 async function joinRoom(roomId){
 
-    try{
+    const res = await fetch(API_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            roomId,
+            clientId,
+            currentTime:video.currentTime,
+            isPlaying:!video.paused,
+            videoUrl:videoUrl.value,
+            isHost
+        })
+    });
 
-        const res =
-            await fetch(API_URL,{
-                method:'POST',
-                headers:{
-                    'Content-Type':'application/json'
-                },
-                body:JSON.stringify({
-                    roomId,
-                    clientId,
-                    currentTime:video.currentTime,
-                    isPlaying:!video.paused,
-                    videoUrl:videoUrl.value,
-                    isHost
-                })
-            });
+    const data = await res.json();
 
-        const data =
-            await res.json();
+    if(data.success){
 
-        if(data.success){
+        currentRoom = roomId;
 
-            currentRoom = roomId;
+        isHost = data.room.host === clientId;
 
-            isHost =
-                data.room.host === clientId;
+        updateStatus(
+            isHost
+            ? `房主: ${roomId}`
+            : `已加入: ${roomId}`
+        );
 
-            updateStatus(
-                isHost
-                ? `房主: ${roomId}`
-                : `已加入: ${roomId}`
-            );
+        clearInterval(pollInterval);
 
-            if(pollInterval){
-                clearInterval(
-                    pollInterval
-                );
-            }
+        pollInterval = setInterval(pollRoom, 2000);
 
-            pollInterval =
-                setInterval(
-                    pollRoom,
-                    2000
-                );
-
-            pollRoom();
-        }
-
-    }catch(e){
-        console.log(e);
+        pollRoom();
     }
 }
 
@@ -271,277 +237,137 @@ async function pollRoom(){
 
     if(!currentRoom) return;
 
+    const res = await fetch(`${API_URL}?roomId=${currentRoom}`);
+    const data = await res.json();
+
+    if(!data.success || !data.room) return;
+
+    const room = data.room;
+
+    viewerCount.innerHTML = `👥 ${room.viewers || 1} 人`;
+
+    if(isHost) return;
+    if(isSyncing) return;
+
+    isSyncing = true;
+
     try{
 
-        const res =
-            await fetch(
-                `${API_URL}?roomId=${currentRoom}`
-            );
+        // ⭐ 视频地址同步
+        if(room.videoUrl && room.videoUrl !== videoUrl.value){
 
-        const data =
-            await res.json();
-
-        if(
-            !data.success ||
-            !data.room
-        ){
-            return;
+            videoUrl.value = room.videoUrl;
+            loadVideo(room.videoUrl);
         }
 
-        const room =
-            data.room;
-
-        viewerCount.innerHTML =
-            `👥 ${room.viewers || 1} 人`;
-
-        // 房主不接收同步
-        if(isHost){
-            return;
+        // 播放同步
+        if(room.isPlaying && video.paused){
+            await video.play().catch(()=>{});
         }
 
-        if(isSyncing) return;
-
-        isSyncing = true;
-
-        try{
-
-            // 视频链接同步
-            if(
-                room.videoUrl &&
-                room.videoUrl !==
-                videoUrl.value
-            ){
-
-                videoUrl.value =
-                    room.videoUrl;
-
-                video.src =
-                    room.videoUrl;
-
-                video.load();
-            }
-
-            // 播放同步
-            if(
-                room.isPlaying &&
-                video.paused
-            ){
-
-                await video.play()
-                    .catch(()=>{});
-            }
-
-            // 暂停同步
-            if(
-                !room.isPlaying &&
-                !video.paused
-            ){
-
-                video.pause();
-            }
-
-            // 时间同步
-            const diff =
-                Math.abs(
-                    video.currentTime -
-                    room.currentTime
-                );
-
-            if(diff > 1.5){
-
-                video.currentTime =
-                    room.currentTime;
-            }
-
-        }finally{
-
-            setTimeout(()=>{
-
-                isSyncing = false;
-
-            },300);
+        if(!room.isPlaying && !video.paused){
+            video.pause();
         }
 
-    }catch(e){
-        console.log(e);
+        // 时间同步
+        const diff = Math.abs(video.currentTime - room.currentTime);
+
+        if(diff > 1.5){
+            video.currentTime = room.currentTime;
+        }
+
+    } finally {
+        setTimeout(()=> isSyncing = false, 300);
     }
 }
 
 async function syncNow(){
 
-    // 只有房主上传状态
-    if(!isHost){
-        return;
-    }
+    if(!isHost || !currentRoom || isSyncing) return;
 
-    if(
-        !currentRoom ||
-        isSyncing
-    ){
-        return;
-    }
-
-    try{
-
-        await fetch(API_URL,{
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json'
-            },
-            body:JSON.stringify({
-                roomId:currentRoom,
-                clientId,
-                currentTime:video.currentTime,
-                isPlaying:!video.paused,
-                videoUrl:videoUrl.value,
-                isHost
-            })
-        });
-
-    }catch(e){
-        console.log(e);
-    }
+    await fetch(API_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            roomId:currentRoom,
+            clientId,
+            currentTime:video.currentTime,
+            isPlaying:!video.paused,
+            videoUrl:videoUrl.value,
+            isHost
+        })
+    });
 }
 
-// 播放同步
-video.addEventListener(
-    'play',
-    ()=>{
+// 事件同步
+video.addEventListener('play', syncNow);
+video.addEventListener('pause', syncNow);
+video.addEventListener('seeked', syncNow);
 
-        syncNow();
-    }
-);
-
-// 暂停同步
-video.addEventListener(
-    'pause',
-    ()=>{
-
-        syncNow();
-    }
-);
-
-// 拖动同步
-video.addEventListener(
-    'seeked',
-    ()=>{
-
-        syncNow();
-    }
-);
-
-// 每秒更新一次时间
 setInterval(()=>{
-
-    if(
-        currentRoom &&
-        isHost &&
-        !video.paused
-    ){
-
+    if(currentRoom && isHost && !video.paused){
         syncNow();
     }
-
 },1000);
 
 // 创建房间
-joinBtn.onclick =
-    async ()=>{
+joinBtn.onclick = async ()=>{
 
-        isHost = true;
+    isHost = true;
 
-        let room =
-            roomInput.value.trim();
+    let room = roomInput.value.trim();
 
-        if(!room){
+    if(!room){
+        room = Math.floor(Math.random()*10000).toString();
+        roomInput.value = room;
+    }
 
-            room =
-                Math.floor(
-                    Math.random()*10000
-                ).toString();
+    await joinRoom(room);
+};
 
-            roomInput.value =
-                room;
-        }
+// 加入房间
+roomInput.addEventListener('keydown', async (e)=>{
 
-        await joinRoom(room);
-    };
+    if(e.key === 'Enter'){
 
-// 回车加入别人房间
-roomInput.addEventListener(
-    'keydown',
-    async (e)=>{
+        isHost = false;
 
-        if(e.key === 'Enter'){
+        const room = roomInput.value.trim();
 
-            isHost = false;
-
-            const room =
-                roomInput.value.trim();
-
-            if(room){
-
-                await joinRoom(room);
-            }
+        if(room){
+            await joinRoom(room);
         }
     }
-);
+});
 
-copyBtn.onclick =
-    ()=>{
+// 复制房间号
+copyBtn.onclick = ()=>{
+    const room = currentRoom || roomInput.value.trim();
+    if(room) navigator.clipboard.writeText(room);
+};
 
-        const room =
-            currentRoom ||
-            roomInput.value.trim();
+// 强制同步
+syncBtn.onclick = pollRoom;
 
-        if(!room) return;
+// 视频地址变化
+videoUrl.addEventListener('change', ()=>{
+    loadVideo(videoUrl.value);
+    syncNow();
+});
 
-        navigator.clipboard
-            .writeText(room);
-    };
+// 离开房间
+window.addEventListener('beforeunload', ()=>{
+    if(!currentRoom) return;
 
-syncBtn.onclick =
-    ()=>{
+    fetch(API_URL,{
+        method:'DELETE',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({roomId:currentRoom})
+    });
+});
 
-        pollRoom();
-    };
-
-videoUrl.addEventListener(
-    'change',
-    ()=>{
-
-        video.src =
-            videoUrl.value;
-
-        video.load();
-
-        syncNow();
-    }
-);
-
-window.addEventListener(
-    'beforeunload',
-    ()=>{
-
-        if(!currentRoom) return;
-
-        fetch(API_URL,{
-            method:'DELETE',
-            headers:{
-                'Content-Type':
-                    'application/json'
-            },
-            body:JSON.stringify({
-                roomId:currentRoom
-            })
-        });
-    }
-);
-
-roomInput.value =
-    Math.floor(
-        Math.random()*10000
-    );
+// 初始化房间号
+roomInput.value = Math.floor(Math.random()*10000);
 
 </script>
 

@@ -6,7 +6,6 @@
 <title>同步观影</title>
 
 <style>
-
 *{
     margin:0;
     padding:0;
@@ -94,7 +93,6 @@ input{
     border-radius:40px;
     font-size:13px;
 }
-
 </style>
 </head>
 
@@ -103,14 +101,7 @@ input{
 <div class="container">
 
     <div class="video-wrapper">
-        <video
-            id="video"
-            controls
-            preload="metadata"
-            controlsList="nodownload"
-        >
-            <source src="https://media.w3.org/2010/05/sintel/trailer.mp4">
-        </video>
+        <video id="video" controls preload="metadata" controlsList="nodownload"></video>
     </div>
 
     <div class="controls">
@@ -120,6 +111,9 @@ input{
         <button id="joinBtn" class="primary">创建房间</button>
         <button id="copyBtn">复制房间号</button>
         <button id="syncBtn">强制同步</button>
+
+        <!-- ⭐ 新增：本地视频 -->
+        <input type="file" id="fileInput" accept="video/*">
 
         <div class="viewer" id="viewerCount">👥 未加入</div>
         <div class="status" id="status">未连接</div>
@@ -145,6 +139,7 @@ const syncBtn = document.getElementById('syncBtn');
 const statusEl = document.getElementById('status');
 const viewerCount = document.getElementById('viewerCount');
 const videoUrl = document.getElementById('videoUrl');
+const fileInput = document.getElementById('fileInput');
 
 let currentRoom = null;
 let isSyncing = false;
@@ -162,35 +157,24 @@ function updateStatus(text){
 }
 
 //
-// ⭐⭐⭐ 核心升级：统一视频加载函数
+// ⭐ 加载视频（支持：直链 + 本地 blob）
 //
 function loadVideo(url){
 
     if(!url) return;
 
-    const lower = url.split('?')[0].toLowerCase();
-
     video.innerHTML = '';
 
     const source = document.createElement('source');
+
+    const clean = url.split('?')[0].toLowerCase();
+
     source.src = url;
 
-    if (lower.endsWith('.mp4')) {
-        source.type = 'video/mp4';
-    }
-    else if (lower.endsWith('.webm')) {
-        source.type = 'video/webm';
-    }
-    else if (lower.endsWith('.ogg') || lower.endsWith('.ogv')) {
-        source.type = 'video/ogg';
-    }
-    else if (lower.endsWith('.m4v')) {
-        source.type = 'video/mp4';
-    }
-    else {
-        // 让浏览器自己判断
-        source.removeAttribute('type');
-    }
+    if(clean.endsWith('.mp4')) source.type = 'video/mp4';
+    else if(clean.endsWith('.webm')) source.type = 'video/webm';
+    else if(clean.endsWith('.ogg') || clean.endsWith('.ogv')) source.type = 'video/ogg';
+    else source.removeAttribute('type');
 
     video.appendChild(source);
     video.load();
@@ -216,17 +200,11 @@ async function joinRoom(roomId){
     if(data.success){
 
         currentRoom = roomId;
-
         isHost = data.room.host === clientId;
 
-        updateStatus(
-            isHost
-            ? `房主: ${roomId}`
-            : `已加入: ${roomId}`
-        );
+        updateStatus(isHost ? `房主: ${roomId}` : `已加入: ${roomId}`);
 
         clearInterval(pollInterval);
-
         pollInterval = setInterval(pollRoom, 2000);
 
         pollRoom();
@@ -253,7 +231,7 @@ async function pollRoom(){
 
     try{
 
-        // ⭐ 视频地址同步
+        // ⭐ 同步视频源（直链 or 本地 blob）
         if(room.videoUrl && room.videoUrl !== videoUrl.value){
 
             videoUrl.value = room.videoUrl;
@@ -299,11 +277,12 @@ async function syncNow(){
     });
 }
 
-// 事件同步
+// 播放同步
 video.addEventListener('play', syncNow);
 video.addEventListener('pause', syncNow);
 video.addEventListener('seeked', syncNow);
 
+// 自动同步
 setInterval(()=>{
     if(currentRoom && isHost && !video.paused){
         syncNow();
@@ -340,7 +319,7 @@ roomInput.addEventListener('keydown', async (e)=>{
     }
 });
 
-// 复制房间号
+// 复制房间
 copyBtn.onclick = ()=>{
     const room = currentRoom || roomInput.value.trim();
     if(room) navigator.clipboard.writeText(room);
@@ -349,10 +328,27 @@ copyBtn.onclick = ()=>{
 // 强制同步
 syncBtn.onclick = pollRoom;
 
-// 视频地址变化
+// ⭐ 视频直链
 videoUrl.addEventListener('change', ()=>{
     loadVideo(videoUrl.value);
     syncNow();
+});
+
+// ⭐ 本地视频支持（核心新增）
+fileInput.addEventListener('change', (e)=>{
+
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const url = URL.createObjectURL(file);
+
+    videoUrl.value = file.name;
+
+    loadVideo(url);
+
+    if(currentRoom){
+        syncNow();
+    }
 });
 
 // 离开房间
